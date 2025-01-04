@@ -1,32 +1,54 @@
 <template>
-    <div class="table">
-        <p class="title">我的分数</p>
-        <section class="content-el">
-            <el-table ref="filterTable" :data="score" v-loading="loading">
+    <div class="score-container">
+        <div class="header">
+            <h2 class="title">我的成绩单</h2>
+            <p class="subtitle">查看所有考试成绩和统计信息</p>
+        </div>
+        <div class="card">
+            <el-table ref="filterTable" :data="score" v-loading="loading" class="custom-table" :header-cell-style="{
+                background: '#f5f5f7',
+                color: '#1d1d1f',
+                fontWeight: '600',
+                fontSize: '0.95rem'
+            }">
                 <el-table-column prop="answerDate" label="考试日期" sortable width="300" column-key="answerDate"
                     :filters="filter" :filter-method="filterHandler">
-                </el-table-column>
-                <el-table-column prop="subject" label="课程名称" width="300" filter-placement="bottom-end">
                     <template #default="scope">
-                        <el-tag>{{ scope.row.subject }}</el-tag>
+                        <span class="date-text">{{ scope.row.answerDate }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="etScore" label="考试分数" width="200"></el-table-column>
-                <el-table-column label="是否及格" width="100">
+
+                <el-table-column prop="subject" label="课程名称" width="300">
                     <template #default="scope">
-                        <el-tag :type="scope.row.etScore >= 60 ? 'success' : 'danger'">
+                        <el-tag class="subject-tag" effect="plain">
+                            {{ scope.row.subject }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="etScore" label="考试分数" width="200">
+                    <template #default="scope">
+                        <span class="score-text">{{ scope.row.etScore }}</span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="是否及格" width="120">
+                    <template #default="scope">
+                        <el-tag :type="scope.row.etScore >= 60 ? 'success' : 'danger'" class="status-tag"
+                            :class="{ 'pass': scope.row.etScore >= 60 }">
                             {{ scope.row.etScore >= 60 ? "及格" : "不及格" }}
                         </el-tag>
                     </template>
                 </el-table-column>
             </el-table>
-            <el-row type="flex" justify="center" align="middle" class="pagination">
+
+            <div class="pagination-wrapper">
                 <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
                     :current-page="pagination.current" :page-sizes="[4, 6, 8, 10]" :page-size="pagination.size"
-                    layout="total, sizes, prev, pager, next, jumper" :total="pagination.total">
+                    layout="total, sizes, prev, pager, next, jumper" :total="pagination.total" background>
                 </el-pagination>
-            </el-row>
-        </section>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -94,21 +116,122 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.pagination {
-    padding-top: 20px;
+.score-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
-.table {
-    width: 980px;
-    margin: 0 auto;
+.header {
+    text-align: left;
+    margin-bottom: 2rem;
 
     .title {
-        margin: 20px;
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin: 0 0 0.5rem 0;
     }
 
-    .content-el {
-        background-color: #fff;
-        padding: 20px;
+    .subtitle {
+        color: #86868b;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.custom-table {
+    // 自定义表格样式
+    --el-table-border-color: transparent;
+    --el-table-header-bg-color: #f5f5f7;
+
+    :deep(.el-table__row) {
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+    }
+}
+
+.subject-tag {
+    background: rgba(0, 122, 255, 0.1);
+    color: #007AFF;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.status-tag {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+
+    &.pass {
+        background: rgba(52, 199, 89, 0.1);
+        color: #34C759;
+    }
+
+    &:not(.pass) {
+        background: rgba(255, 59, 48, 0.1);
+        color: #FF3B30;
+    }
+}
+
+.date-text {
+    color: #1d1d1f;
+    font-weight: 500;
+}
+
+.score-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+.pagination-wrapper {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+
+    :deep(.el-pagination) {
+        --el-pagination-button-bg-color: white;
+        --el-pagination-hover-color: #007AFF;
+    }
+}
+
+@media (max-width: 768px) {
+    .score-container {
+        padding: 1rem;
+    }
+
+    .header {
+        text-align: center;
+
+        .title {
+            font-size: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+        }
+    }
+
+    .card {
+        padding: 1rem;
+        border-radius: 16px;
     }
 }
 </style>
