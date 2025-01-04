@@ -149,148 +149,141 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.pagination {
-    padding: 20px 0px 30px 0px;
+#myExam {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
 
-    .el-pagination {
-        display: flex;
-        justify-content: center;
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.wrapper {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+}
+
+.top {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.order {
+    cursor: pointer;
+    font-size: 18px;
+    color: #333;
+    transition: color 0.3s, border-bottom 0.3s;
+}
+
+.order:hover {
+    color: #007aff;
+    border-bottom: 2px solid #007aff;
+}
+
+.search-li {
+    margin-left: auto;
+}
+
+.icon {
+    position: relative;
+}
+
+.el-icon-search {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    color: #ccc;
+}
+
+.search {
+    width: 240px;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    font-size: 0.9rem;
+
+    &:focus {
+        outline: none;
+        border-color: #007aff;
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
     }
+}
+
+.search:hover {
+    border-color: #007aff;
 }
 
 .paper {
-    h4 {
-        cursor: pointer;
-    }
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
 }
 
-.paper .item a {
-    color: #000;
+.item {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.wrapper .top .order {
+.item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.item h4 {
     cursor: pointer;
+    font-size: 18px;
+    color: #007aff;
+    margin-bottom: 10px;
 }
 
-.wrapper .top .order:hover {
-    color: #0195ff;
-    border-bottom: 2px solid #0195ff;
+.item .name {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
 }
 
-.wrapper .top .order:visited {
-    color: #0195ff;
-    border-bottom: 2px solid #0195ff;
+.item .info {
+    font-size: 14px;
+    color: #888;
 }
 
 .item .info i {
     margin-right: 5px;
-    color: #0195ff;
+    color: #007aff;
 }
 
 .item .info span {
-    margin-right: 14px;
+    margin-right: 10px;
 }
 
-.paper .item {
-    width: 380px;
-    border-radius: 4px;
-    padding: 20px 30px;
-    border: 1px solid #eee;
-    box-shadow: 0 0 4px 2px rgba(217, 222, 234, 0.3);
-    transition: all 0.6s ease;
-}
-
-.paper .item:hover {
-    box-shadow: 0 0 4px 2px rgba(140, 193, 248, 0.45);
-    transform: scale(1.03);
-}
-
-.paper .item .info {
-    font-size: 14px;
-    color: #88949b;
-}
-
-.paper .item .name {
-    font-size: 14px;
-    color: #88949b;
-}
-
-.paper * {
-    margin: 20px 0;
-}
-
-.wrapper .paper {
+.pagination {
     display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-}
-
-.top .el-icon-search {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-}
-
-.top .icon {
-    position: relative;
-}
-
-.wrapper .top {
-    border-bottom: 1px solid #eee;
-    margin-bottom: 20px;
-}
-
-#myExam .search-li {
-    margin-left: auto;
-}
-
-.top .search-li {
-    margin-left: auto;
-}
-
-.top li {
-    display: flex;
-    align-items: center;
-}
-
-.top .search {
-    margin-left: auto;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #eee;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-}
-
-.top .search:hover {
-    color: #0195ff;
-    border-color: #0195ff;
-}
-
-.wrapper .top {
-    display: flex;
-}
-
-.wrapper .top li {
-    margin: 20px;
-}
-
-#myExam {
-    width: 980px;
-    margin: 0 auto;
-}
-
-#myExam .title {
-    margin: 20px;
-}
-
-#myExam .wrapper {
-    background-color: #fff;
+    justify-content: center;
+    padding: 20px 0;
 }
 
 .no-data {
     text-align: center;
     color: #999;
     margin: 20px 0;
+    font-size: 16px;
 }
 </style>
