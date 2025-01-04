@@ -4,15 +4,18 @@
         <div class="wrapper">
             <ul class="top">
                 <li class="order">试卷列表</li>
-                <li class="search-li">
-                    <div class="icon">
-                        <input type="text" placeholder="试卷名称" class="search" v-model="key" />
-                        <i class="el-icon-search"></i>
+                <div class="search-container">
+                    <div class="search-wrapper">
+                        <div class="search-box">
+                            <i class="el-icon-search"></i>
+                            <input type="text" placeholder="搜索试卷..." class="search-input" v-model="key"
+                                @keyup.enter="search" />
+                        </div>
                     </div>
-                </li>
-                <li>
-                    <el-button type="primary" @click="search">搜索试卷</el-button>
-                </li>
+                    <el-button type="primary" class="search-btn" @click="search">
+                        搜索试卷
+                    </el-button>
+                </div>
             </ul>
             <ul class="paper" v-loading="loading">
                 <template v-if="pagination.records && pagination.records.length > 0">
@@ -175,55 +178,103 @@ onMounted(() => {
 .top {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
     border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
 }
 
 .order {
-    cursor: pointer;
-    font-size: 18px;
-    color: #333;
-    transition: color 0.3s, border-bottom 0.3s;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1d1d1f;
 }
 
-.order:hover {
-    color: #007aff;
-    border-bottom: 2px solid #007aff;
-}
-
-.search-li {
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     margin-left: auto;
 }
 
-.icon {
+.search-wrapper {
     position: relative;
-}
-
-.el-icon-search {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    color: #ccc;
-}
-
-.search {
     width: 240px;
-    padding: 0.8rem 1rem;
-    border-radius: 12px;
-    border: 1px solid #e0e0e0;
-    background: white;
-    font-size: 0.9rem;
+}
 
-    &:focus {
-        outline: none;
-        border-color: #007aff;
-        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+.search-box {
+    width: 100%;
+
+    .el-icon-search {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #86868b;
+        font-size: 1.1rem;
+        pointer-events: none;
     }
 }
 
-.search:hover {
-    border-color: #007aff;
+.search-input {
+    width: 75%;
+    padding: 0.8rem 1rem 0.8rem 2.8rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: white;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+
+    &:focus {
+        outline: none;
+        border-color: #007AFF;
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+
+    &::placeholder {
+        color: #86868b;
+    }
+}
+
+.search-btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    background: #007AFF;
+    color: white;
+    border: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    height: 42px;
+
+    &:hover {
+        background: #0066DD;
+        transform: translateY(-2px);
+    }
+}
+
+@media (max-width: 768px) {
+    .top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .search-container {
+        width: 100%;
+        margin-left: 0;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .search-wrapper {
+        width: 100%;
+    }
+
+    .search-btn {
+        width: 100%;
+    }
 }
 
 .paper {
