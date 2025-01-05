@@ -1,6 +1,16 @@
 <template>
     <div id="myExam">
-        <div class="title">我的试卷</div>
+        <div class="header">
+            <div class="header-content">
+                <h2 class="title">
+                    <el-icon class="title-icon">
+                        <Document />
+                    </el-icon>
+                    我的试卷
+                </h2>
+                <p class="subtitle">查看和参与所有可用的考试</p>
+            </div>
+        </div>
         <div class="wrapper">
             <ul class="top">
                 <li class="order">试卷列表</li>
@@ -50,6 +60,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'
 import axios from 'axios';
+import { Document } from '@element-plus/icons-vue'
 
 const key = ref(''); // 搜索关键字
 const loading = ref(false); // 加载状态
@@ -160,11 +171,37 @@ onMounted(() => {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-.title {
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 20px;
+.header {
+    margin-bottom: 8px;
+    padding: 1rem 0;
+
+    .header-content {
+        text-align: left;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin: 0 0 0.5rem 0;
+
+        .title-icon {
+            font-size: 1.8rem;
+            color: var(--el-color-primary);
+        }
+    }
+
+    .subtitle {
+        color: #86868b;
+        font-size: 1.1rem;
+        margin: 0;
+        padding-left: 2.3rem; // 与图标对齐
+    }
 }
 
 .wrapper {
@@ -274,6 +311,23 @@ onMounted(() => {
 
     .search-btn {
         width: 100%;
+    }
+
+    .header {
+        padding: 1rem;
+
+        .title {
+            font-size: 1.5rem;
+
+            .title-icon {
+                font-size: 1.4rem;
+            }
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            padding-left: 1.9rem;
+        }
     }
 }
 
