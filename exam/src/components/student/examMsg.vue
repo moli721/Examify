@@ -1,83 +1,115 @@
 <template>
-    <div id="msg">
-        <div class="title">
-            <span>试卷列表</span>
-            <span>/ {{ examData.source }}</span>
+    <div class="msg-container">
+        <div class="header">
+            <h2 class="title">试卷列表</h2>
+            <span class="source">来源: {{ examData.source }}</span>
         </div>
         <div class="wrapper">
             <ul class="top">
                 <li class="example">{{ examData.source }}</li>
-                <li><i class="iconfont icon-pen-"></i></li>
-                <li><i class="iconfont icon-share"></i></li>
+                <li class="icon-btn">
+                    <el-icon>
+                        <Edit />
+                    </el-icon>
+                    <span>编辑</span>
+                </li>
+                <li class="icon-btn">
+                    <el-icon>
+                        <Share />
+                    </el-icon>
+                    <span>分享</span>
+                </li>
                 <li class="right">
-                    <div>
+                    <div class="score-info">
                         <span class="count">总分</span>
                         <span class="score">{{ score[0] + score[1] + score[2] }}</span>
                     </div>
                 </li>
             </ul>
             <ul class="bottom">
-                <li>更新于{{ examData.examDate }}</li>
-                <li>来自 {{ examData.institute }}</li>
-                <li class="btn">{{ examData.type }}</li>
+                <li class="info-item">
+                    <el-icon>
+                        <Calendar />
+                    </el-icon>
+                    <span>更新于 {{ examData.examDate }}</span>
+                </li>
+                <li class="info-item">
+                    <el-icon>
+                        <School />
+                    </el-icon>
+                    <span>来自 {{ examData.institute }}</span>
+                </li>
+                <li class="exam-type">
+                    <el-icon>
+                        <Document />
+                    </el-icon>
+                    <span>{{ examData.type }}</span>
+                </li>
                 <li class="right">
-                    <el-button @click="toAnswer(examData.examCode)">开始答题</el-button>
+                    <el-button type="primary" @click="toAnswer(examData.examCode)">开始答题</el-button>
                 </li>
             </ul>
             <ul class="info">
-                <li @click="dialogVisible = true">
-                    <a href="javascript:;"><i class="iconfont icon-info"></i>考生须知</a>
+                <li @click="dialogVisible = true" class="info-link">
+                    <el-icon>
+                        <InfoFilled />
+                    </el-icon>
+                    <span>考生须知</span>
                 </li>
             </ul>
         </div>
         <div class="content">
-            <el-collapse v-model="activeName">
-                <el-collapse-item class="header" name="0">
-                    <template #title>
-                        <div class="title">
-                            <span>{{ examData.source }}</span>
-                            <i class="header-icon el-icon-info"></i>
-                            <span class="time">{{ examData.totalScore }}分 / {{ examData.totalTime }}分钟</span>
-                            <el-button type="primary" size="small">点击查看试题详情</el-button>
+            <div class="exam-details">
+                <div class="exam-header">
+                    <div class="exam-info">
+                        <span class="exam-name">{{ examData.source }}</span>
+                        <div class="exam-meta">
+                            <el-icon>
+                                <Timer />
+                            </el-icon>
+                            <span class="time">{{ examData.totalTime }}分钟</span>
+                            <el-icon>
+                                <Medal />
+                            </el-icon>
+                            <span class="score">{{ examData.totalScore }}分</span>
                         </div>
-                    </template>
-                    <el-collapse class="inner">
-                        <el-collapse-item>
-                            <template #title>
-                                <div class="titlei">选择题 (共{{ topicCount[0] }}题 共计{{ score[0] }}分)</div>
-                            </template>
-                            <div class="contenti">
-                                <ul class="question" v-for="(list, index) in topic[1]" :key="index">
-                                    <li>{{ index + 1 }}. {{ list.question }} {{ list.score }}分</li>
-                                </ul>
+                    </div>
+                    <el-button type="primary" size="small" class="detail-btn">
+                        <el-icon>
+                            <Document />
+                        </el-icon>
+                        查看详情
+                    </el-button>
+                </div>
+
+                <el-collapse v-model="activeName" class="topics-collapse">
+                    <el-collapse-item v-for="(topicItem, key) in topic" :key="key" :name="key.toString()">
+                        <template #title>
+                            <div class="topic-header">
+                                <span class="topic-type">
+                                    {{ getTopicType(key) }} <!-- 根据键获取题目类型 -->
+                                </span>
+                                <div class="topic-meta">
+                                    <span class="topic-count" v-if="topicCount[key - 1]">共 {{ topicCount[key - 1] }}
+                                        题</span> <!-- 显示题目数量 -->
+                                    <span class="topic-score" v-if="score[key - 1]">{{ score[key - 1] }} 分</span>
+                                    <!-- 显示题目总分 -->
+                                    <span v-else class="no-data">暂无数据</span> <!-- 如果没有数据，显示暂无数据 -->
+                                </div>
                             </div>
-                        </el-collapse-item>
-                        <el-collapse-item>
-                            <template #title>
-                                <div class="titlei">填空题 (共{{ topicCount[1] }}题 共计{{ score[1] }}分)</div>
-                            </template>
-                            <div class="contenti">
-                                <ul class="question" v-for="(list, index) in topic[2]" :key="index">
-                                    <li>{{ topicCount[0] + index + 1 }}. {{ list.question }} {{ list.score }}分</li>
-                                </ul>
+                        </template>
+
+                        <div class="questions-list">
+                            <div v-for="(list, idx) in topicItem" :key="idx" class="question-item">
+                                <span class="question-number">{{ idx + 1 }}.</span> <!-- 显示题目编号 -->
+                                <span class="question-content">{{ list.question }}</span> <!-- 显示题目内容 -->
+                                <span class="question-score">{{ list.score }}分</span> <!-- 显示题目分数 -->
                             </div>
-                        </el-collapse-item>
-                        <el-collapse-item>
-                            <template #title>
-                                <div class="titlei">判断题 (共{{ topicCount[2] }}题 共计{{ score[2] }}分)</div>
-                            </template>
-                            <div class="contenti">
-                                <ul class="question" v-for="(list, index) in topic[3]" :key="index">
-                                    <li>{{ topicCount[0] + topicCount[1] + index + 1 }}. {{ list.question }} {{
-                                        list.score }}分</li>
-                                </ul>
-                            </div>
-                        </el-collapse-item>
-                    </el-collapse>
-                </el-collapse-item>
-            </el-collapse>
+                        </div>
+                    </el-collapse-item>
+                </el-collapse>
+            </div>
         </div>
-        <!--考生须知对话框-->
         <el-dialog title="考生须知" :visible.sync="dialogVisible" width="30%">
             <span>{{ examData.tips }}</span>
             <span slot="footer" class="dialog-footer">
@@ -91,6 +123,16 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import {
+    Edit,
+    Share,
+    Document,
+    Timer,
+    Medal,
+    InfoFilled,
+    Calendar,
+    School
+} from '@element-plus/icons-vue';
 
 const dialogVisible = ref(false); // 对话框属性
 const activeName = ref('0'); // 默认打开序号
@@ -104,28 +146,56 @@ const router = useRouter();
 
 // 初始化页面数据
 const init = async () => {
-    const examCode = route.query.examCode; // 获取路由传递过来的试卷编号
-    const res = await axios.get(`/exam/${examCode}`); // 通过 examCode 请求试卷详细信息
-    console.log(res)
-    res.data.data.examDate = res.data.data.examDate.substr(0, 10);
-    examData.value = { ...res.data.data };
-    const paperId = examData.value.paperId;
+    try {
+        const examCode = route.query.examCode;
+        const res = await axios.get(`/exam/${examCode}`);
+        console.log('试卷数据:', res.data); // 添加日志查看数据
 
-    const topicRes = await axios.get(`/paper/${paperId}`); // 通过 paperId 获取试题题目信息
-    topic.value = { ...topicRes.data };
+        examData.value = { ...res.data.data };
+        const paperId = examData.value.paperId;
 
-    const keys = Object.keys(topic.value); // 对象转数组
-    keys.forEach(e => {
-        const data = topic.value[e];
-        topicCount.value.push(data.length);
-        const currentScore = data.reduce((sum, item) => sum + item.score, 0); // 计算总分
-        score.value.push(currentScore); // 把每种题型总分存入 score
-    });
+        const topicRes = await axios.get(`/paper/${paperId}`);
+        console.log('题目数据:', topicRes.data); // 添加日志查看数据
+
+        topic.value = { ...topicRes.data };
+
+        // 确保数据存在后再处理
+        if (topic.value) {
+            const keys = Object.keys(topic.value);
+            keys.forEach(e => {
+                const data = topic.value[e];
+                if (Array.isArray(data)) {
+                    topicCount.value.push(data.length);
+                    const currentScore = data.reduce((sum, item) => sum + (item.score || 0), 0);
+                    score.value.push(currentScore);
+                }
+            });
+        }
+
+        // console.log('题目类型数据:', topic.value);
+        // console.log('题目数量:', topicCount.value);
+        // console.log('题目分数:', score.value);
+    } catch (error) {
+        console.error('数据获取错误:', error);
+    }
 };
 
 // 跳转到答题页面
 const toAnswer = (id) => {
     router.push({ path: "/student/answer", query: { examCode: id } });
+};
+
+const getTopicType = (index) => {
+    switch (index) {
+        case '1':
+            return '选择题';
+        case '2':
+            return '填空题';
+        case '3':
+            return '判断题';
+        default:
+            return '其他';
+    }
 };
 
 // 组件挂载时初始化数据
@@ -135,158 +205,292 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.bottom {
-    .right {
-        .el-button {
+.msg-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    .title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1d1d1f;
+    }
+
+    .source {
+        font-size: 1rem;
+        color: #86868b;
+    }
+}
+
+.wrapper {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+
+    .top,
+    .bottom,
+    .info {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 12px 0;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .right {
+            margin-left: auto;
+        }
+    }
+
+    .top {
+        .example {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+            min-width: 200px;
+        }
+
+        .icon-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+
+            &:hover {
+                background-color: #f5f7fa;
+            }
+        }
+    }
+
+    .bottom {
+        .info-item {
+            min-width: 200px;
+            color: #606266;
+        }
+
+        .exam-type {
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: #f2f6fc;
             color: #409EFF;
-            border-color: #c6e2ff;
-            background-color: #ecf5ff;
+            border: 1px solid #e4e7ed;
+            transition: all 0.3s;
+
+            &:hover {
+                background: #ecf5ff;
+                border-color: #409EFF;
+            }
+        }
+    }
+
+    .info {
+        .info-link {
+            color: #409EFF;
+            cursor: pointer;
+            transition: color 0.3s;
+
+            &:hover {
+                color: #66b1ff;
+            }
+        }
+    }
+
+    .el-icon {
+        font-size: 16px;
+    }
+
+    span {
+        font-size: 14px;
+    }
+}
+
+.content {
+    margin-top: 2rem;
+}
+
+.exam-details {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.exam-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: #f5f5f7;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+    .exam-info {
+        .exam-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .exam-meta {
+            color: #86868b;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            .el-icon {
+                vertical-align: middle;
+                margin-right: 4px;
+                width: 1em;
+                height: 1em;
+            }
+        }
+    }
+
+    .detail-btn {
+        background: #007AFF;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+
+        .el-icon {
+            margin-right: 4px;
+        }
+
+        &:hover {
+            background: #0066DD;
+            transform: translateY(-2px);
         }
     }
 }
 
-.right {
-    margin-left: auto;
+.topics-collapse {
+    :deep(.el-collapse-item__header) {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        border: none;
+        background: #fff;
+
+        &:hover {
+            background: #f5f5f7;
+        }
+    }
+
+    :deep(.el-collapse-item__content) {
+        padding: 1rem 1.5rem;
+    }
 }
 
-.inner .contenti .question {
-    margin-left: 40px;
-    color: #9a9a9a;
-    font-size: 14px;
+.topic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    .topic-type {
+        font-weight: 500;
+        color: #1d1d1f;
+    }
+
+    .topic-meta {
+        display: flex;
+        gap: 1rem;
+        color: #86868b;
+        font-size: 0.9rem;
+
+        .topic-score {
+            color: #007AFF;
+            font-weight: 500;
+        }
+    }
 }
 
-.content .inner .titlei {
-    margin-left: 20px;
-    font-size: 16px;
-    color: #88949b;
-    font-weight: bold;
+.questions-list {
+    .question-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.8rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        transition: background 0.3s ease;
+
+        &:hover {
+            background: #f5f5f7;
+        }
+
+        .question-number {
+            color: #007AFF;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            min-width: 1.5rem;
+        }
+
+        .question-content {
+            flex: 1;
+            color: #1d1d1f;
+        }
+
+        .question-score {
+            color: #86868b;
+            margin-left: 1rem;
+        }
+    }
 }
 
-.content .title .time {
-    font-size: 16px;
-    margin-left: 420px;
-    color: #999;
+@media (max-width: 768px) {
+    .exam-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+
+        .detail-btn {
+            width: 100%;
+        }
+    }
+
+    .topic-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
 }
 
-.content .stitle {
-    background-color: #0195ff;
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
 }
 
-.content .title span {
-    margin-right: 10px;
-}
-
-#msg .content .title {
-    font-size: 20px;
-    margin: 0px;
+.score-info {
     display: flex;
     align-items: center;
-}
+    gap: 8px;
 
-.content {
-    margin-top: 20px;
-    background-color: #fff;
-}
+    .count {
+        color: #909399;
+    }
 
-.content .header {
-    padding: 10px 30px;
-}
-
-.wrapper .info {
-    margin: 20px 0px 0px 20px;
-    border-top: 1px solid #eee;
-    padding: 20px 0px 10px 0px;
-}
-
-.wrapper .info a {
-    color: #88949b;
-    font-size: 14px;
-}
-
-.wrapper .info a:hover {
-    color: #0195ff;
-}
-
-.wrapper .bottom .btn {
-    cursor: pointer;
-    padding: 5px 10px;
-    border: 1px solid #88949b;
-    border-radius: 4px;
-}
-
-.wrapper .bottom {
-    display: flex;
-    margin-left: 20px;
-    color: #999;
-    font-size: 14px;
-    align-items: center;
-}
-
-.wrapper .bottom li {
-    margin-right: 14px;
-}
-
-#msg {
-    background-color: #eee;
-    width: 980px;
-    margin: 0 auto;
-}
-
-#msg .title {
-    margin: 20px;
-}
-
-#msg .wrapper {
-    background-color: #fff;
-    padding: 10px;
-}
-
-.wrapper .top {
-    display: flex;
-    margin: 20px;
-    align-items: center;
-}
-
-.wrapper .top .right {
-    margin-left: auto;
-}
-
-.wrapper .top .example {
-    color: #333;
-    font-size: 22px;
-    font-weight: 700;
-}
-
-.wrapper .top li i {
-    margin-left: 20px;
-    color: #88949b;
-}
-
-.wrapper .right .count {
-    margin-right: 60px;
-    color: #fff;
-    padding: 4px 10px;
-    background-color: #88949b;
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border: 1px solid #88949b;
-}
-
-.wrapper .right .score {
-    position: absolute;
-    left: 53px;
-    top: -5px;
-    padding: 1px 12px;
-    font-size: 20px;
-    color: #88949b;
-    border: 1px dashed #88949b;
-    border-left: none;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-    font-weight: bold;
-}
-
-.wrapper .right div {
-    position: relative;
+    .score {
+        font-size: 18px;
+        font-weight: 600;
+        color: #409EFF;
+    }
 }
 </style>
