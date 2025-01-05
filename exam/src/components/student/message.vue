@@ -1,8 +1,15 @@
 <template>
     <div class="message-container">
         <div class="header">
-            <h2 class="title">留言板</h2>
-            <p class="subtitle">分享你的想法和建议</p>
+            <div class="header-content">
+                <h2 class="title">
+                    <el-icon class="title-icon">
+                        <ChatDotRound />
+                    </el-icon>
+                    留言板
+                </h2>
+                <p class="subtitle">分享你的想法和建议</p>
+            </div>
         </div>
 
         <div class="message-card">
@@ -72,6 +79,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
+import { ChatDotRound } from '@element-plus/icons-vue'
 
 // 响应式状态
 const flag = ref(false)
@@ -187,24 +195,39 @@ onMounted(() => {
 .message-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 20px;
 }
 
 .header {
-    text-align: left;
-    margin-bottom: 2rem;
+    margin-bottom: 8px;
+    padding: 1rem 0;
+
+    .header-content {
+        text-align: left;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
     .title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         font-size: 2rem;
         font-weight: 600;
         color: #1d1d1f;
         margin: 0 0 0.5rem 0;
+
+        .title-icon {
+            font-size: 1.8rem;
+            color: var(--el-color-primary);
+        }
     }
 
     .subtitle {
         color: #86868b;
         font-size: 1.1rem;
         margin: 0;
+        padding-left: 2.3rem; // 与图标对齐
     }
 }
 
@@ -418,7 +441,20 @@ onMounted(() => {
     }
 
     .header {
-        text-align: center;
+        padding: 1rem;
+
+        .title {
+            font-size: 1.5rem;
+
+            .title-icon {
+                font-size: 1.4rem;
+            }
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            padding-left: 1.9rem;
+        }
     }
 
     .message-card {
