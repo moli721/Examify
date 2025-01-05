@@ -1,6 +1,16 @@
 <template>
     <div id="myExam">
-        <div class="title">我的练习</div>
+        <div class="header">
+            <div class="header-content">
+                <h2 class="title">
+                    <el-icon class="title-icon">
+                        <Edit />
+                    </el-icon>
+                    我的练习
+                </h2>
+                <p class="subtitle">开始练习，提升你的能力</p>
+            </div>
+        </div>
         <div class="wrapper">
             <div class="filters">
                 <div class="status-tabs">
@@ -78,6 +88,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { Edit } from '@element-plus/icons-vue'
 
 const loading = ref(false);
 const key = ref(null);
@@ -135,14 +146,40 @@ onMounted(() => {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 20px;
 }
 
-.title {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #1d1d1f;
-    margin-bottom: 2rem;
+.header {
+    margin-bottom: 8px;
+    padding: 1rem 0;
+
+    .header-content {
+        text-align: left;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin: 0 0 0.5rem 0;
+
+        .title-icon {
+            font-size: 1.8rem;
+            color: var(--el-color-primary);
+        }
+    }
+
+    .subtitle {
+        color: #86868b;
+        font-size: 1.1rem;
+        margin: 0;
+        padding-left: 2.3rem;
+    }
 }
 
 .wrapper {
@@ -383,6 +420,23 @@ onMounted(() => {
 
     .exam-grid {
         grid-template-columns: 1fr;
+    }
+
+    .header {
+        padding: 1rem;
+
+        .title {
+            font-size: 1.5rem;
+
+            .title-icon {
+                font-size: 1.4rem;
+            }
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            padding-left: 1.9rem;
+        }
     }
 }
 </style>
