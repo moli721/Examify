@@ -76,7 +76,7 @@ const { cookies } = useCookies();
 const route = useRoute();
 const currentRoute = computed(() => route.path);
 
-const flag = ref(true);
+const flag = ref(false);
 let closeTimer = null;
 const user = ref({});
 
