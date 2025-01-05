@@ -6,6 +6,7 @@ export const useStore = defineStore('user', {
         isPractice: false, // 练习模式标志
         flag: false, // 菜单栏左右滑动标志
         userInfo: null,
+        isCollapsed: false, // 菜单栏是否折叠
         menu: [
             {
                 index: '1',
