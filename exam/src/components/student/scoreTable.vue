@@ -1,8 +1,15 @@
 <template>
     <div class="score-container">
         <div class="header">
-            <h2 class="title">我的成绩单</h2>
-            <p class="subtitle">查看所有考试成绩和统计信息</p>
+            <div class="header-content">
+                <h2 class="title">
+                    <el-icon class="title-icon">
+                        <TrendCharts />
+                    </el-icon>
+                    我的成绩单
+                </h2>
+                <p class="subtitle">查看所有考试成绩和统计信息</p>
+            </div>
         </div>
         <div class="card">
             <el-table ref="filterTable" :data="score" v-loading="loading" class="custom-table" :header-cell-style="{
@@ -56,6 +63,7 @@
 import { ref, onMounted } from 'vue';
 import { useCookies } from 'vue3-cookies';
 import axios from 'axios'; // 确保您已经安装了 axios
+import { TrendCharts } from '@element-plus/icons-vue'
 
 const pagination = ref({
     current: 1, // 当前页
@@ -119,24 +127,39 @@ onMounted(() => {
 .score-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 20px;
 }
 
 .header {
-    text-align: left;
-    margin-bottom: 2rem;
+    margin-bottom: 8px;
+    padding: 1rem 0;
+
+    .header-content {
+        text-align: left;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
     .title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         font-size: 2rem;
         font-weight: 600;
         color: #1d1d1f;
         margin: 0 0 0.5rem 0;
+
+        .title-icon {
+            font-size: 1.8rem;
+            color: var(--el-color-primary);
+        }
     }
 
     .subtitle {
         color: #86868b;
         font-size: 1.1rem;
         margin: 0;
+        padding-left: 2.3rem; // 与图标对齐
     }
 }
 
@@ -218,14 +241,19 @@ onMounted(() => {
     }
 
     .header {
-        text-align: center;
+        padding: 1rem;
 
         .title {
             font-size: 1.5rem;
+
+            .title-icon {
+                font-size: 1.4rem;
+            }
         }
 
         .subtitle {
             font-size: 1rem;
+            padding-left: 1.9rem;
         }
     }
 
