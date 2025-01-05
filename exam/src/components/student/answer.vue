@@ -1,143 +1,254 @@
 <template>
   <div id="answer" v-if="isPageReady">
-    <!--顶部信息栏-->
-    <div class="top">
-      <ul class="item">
-        <li><i class="iconfont icon-menufold icon20" ref="toggleRef" @click="slider_flag = !slider_flag"></i></li>
-        <li>{{ examData?.type || '' }} - {{ examData?.source || '' }}</li>
-        <li @click="flag = !flag">
-          <i class="iconfont icon-user icon20"></i>
-          <div class="msg" v-if="flag" @click.stop="flag = !flag">
-            <p>姓名：{{ userInfo.name }}</p>
-            <p>准考证号: {{ userInfo.id }}</p>
+    <!-- 顶部导航栏 -->
+    <div class="nav-header">
+      <div class="nav-content">
+        <!-- 左侧区域 -->
+        <div class="left-section">
+          <div class="logo">
+            <el-icon>
+              <Monitor />
+            </el-icon>
           </div>
-        </li>
-        <li><i class="iconfont icon-arrLeft icon20"></i></li>
-      </ul>
+          <el-button class="menu-toggle" @click="slider_flag = !slider_flag" text>
+            <el-icon>
+              <Fold v-if="slider_flag" />
+              <Expand v-else />
+            </el-icon>
+            <span>{{ slider_flag ? '收起' : '展开' }}</span>
+          </el-button>
+          <div class="exam-info">
+            <span class="exam-type">{{ examData?.type || '期末考试' }}</span>
+            <el-divider direction="vertical" />
+            <span class="exam-source">{{ examData?.source || '计算机网络' }}</span>
+          </div>
+        </div>
+
+        <!-- 右侧区域 -->
+        <div class="right-section">
+          <el-dropdown trigger="click" @visible-change="(visible) => flag = visible">
+            <div class="user-info-trigger">
+              <el-avatar :size="32" :icon="UserFilled" />
+              <span>{{ userInfo.name }}</span>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item disabled>
+                  <div class="user-detail">
+                    <div class="detail-item">
+                      <span class="label">姓名：</span>
+                      <span class="value">{{ userInfo.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="label">准考证号：</span>
+                      <span class="value">{{ userInfo.id }}</span>
+                    </div>
+                  </div>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
     </div>
     <div class="flexarea">
-      <!--左边题目编号区-->
       <transition name="slider-fade">
-        <div class="left" v-if="slider_flag">
-          <ul class="l-top">
-            <li>
-              <a href="javascript:;"></a>
+        <div class="question-nav" v-if="slider_flag">
+          <!-- 题目状态图例 -->
+          <div class="status-legend">
+            <div class="legend-item">
+              <div class="status-box current"></div>
               <span>当前</span>
-            </li>
-            <li>
-              <a href="javascript:;"></a>
+            </div>
+            <div class="legend-item">
+              <div class="status-box unanswered"></div>
               <span>未答</span>
-            </li>
-            <li>
-              <a href="javascript:;"></a>
+            </div>
+            <div class="legend-item">
+              <div class="status-box answered"></div>
               <span>已答</span>
-            </li>
-            <li>
-              <a href="javascript:;"></a>
+            </div>
+            <div class="legend-item">
+              <div class="status-box marked"></div>
               <span>标记</span>
-            </li>
-          </ul>
-          <div class="l-bottom">
-            <div class="item">
-              <p>选择题部分</p>
-              <ul>
-                <li v-for="(list, index1) in topic[1]" :key="index1">
-                  <a href="javascript:;" @click="change(index1)"
-                    :class="{ 'border': index == index1 && currentType == 1, 'bg': bg_flag && topic[1][index1].isClick }">
-                    <span :class="{ 'mark': topic[1][index1].isMark }"></span>
-                    {{ index1 + 1 }}
-                  </a>
-                </li>
-              </ul>
             </div>
-            <div class="item">
-              <p>填空题部分</p>
-              <ul>
-                <li v-for="(list, index2) in topic[2]" :key="index2">
-                  <a href="javascript:;" @click="fill(index2)"
-                    :class="{ 'border': index == index2 && currentType == 2, 'bg': fillAnswer[index2][3] }">
-                    <span :class="{ 'mark': topic[2][index2].isMark }"></span>
-                    {{ topicCount[0] + index2 + 1 }}
-                  </a>
-                </li>
-              </ul>
+          </div>
+
+          <!-- 题目列表区域 -->
+          <div class="question-list">
+            <!-- 选择题部分 -->
+            <div class="question-section">
+              <div class="section-header">
+                <el-icon><Select /></el-icon>
+                <span>选择题部分</span>
+              </div>
+              <div class="number-grid">
+                <div v-for="(item, idx) in topic[1]" :key="idx" class="number-box" :class="{
+                  'current': index === idx && currentType === 1,
+                  'answered': item.isClick,
+                  'marked': item.isMark
+                }" @click="change(idx)">
+                  {{ idx + 1 }}
+                </div>
+              </div>
             </div>
-            <div class="item">
-              <p>判断题部分</p>
-              <ul>
-                <li v-for="(list, index3) in topic[3]" :key="index3">
-                  <a href="javascript:;" @click="judge(index3)"
-                    :class="{ 'border': index == index3 && currentType == 3, 'bg': bg_flag && topic[3][index3].isClick }">
-                    <span :class="{ 'mark': topic[3][index3].isMark }"></span>
-                    {{ topicCount[0] + topicCount[1] + index3 + 1 }}
-                  </a>
-                </li>
-              </ul>
+
+            <!-- 填空题部分 -->
+            <div class="question-section">
+              <div class="section-header">
+                <el-icon>
+                  <Edit />
+                </el-icon>
+                <span>填空题部分</span>
+              </div>
+              <div class="number-grid">
+                <div v-for="(item, idx) in topic[2]" :key="idx" class="number-box" :class="{
+                  'current': index === idx && currentType === 2,
+                  'answered': fillAnswer[idx][3],
+                  'marked': item.isMark
+                }" @click="fill(idx)">
+                  {{ topicCount[0] + idx + 1 }}
+                </div>
+              </div>
             </div>
-            <div class="final" @click="commit()">结束考试</div>
+
+            <!-- 判断题部分 -->
+            <div class="question-section">
+              <div class="section-header">
+                <el-icon>
+                  <Check />
+                </el-icon>
+                <span>判断题部分</span>
+              </div>
+              <div class="number-grid">
+                <div v-for="(item, idx) in topic[3]" :key="idx" class="number-box" :class="{
+                  'current': index === idx && currentType === 3,
+                  'answered': item.isClick,
+                  'marked': item.isMark
+                }" @click="judge(idx)">
+                  {{ topicCount[0] + topicCount[1] + idx + 1 }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 结束考试按钮 -->
+            <el-button type="danger" class="submit-btn" @click="commit" :icon="Timer">
+              结束考试
+            </el-button>
           </div>
         </div>
       </transition>
       <!--右边选择答题区-->
       <transition name="slider-fade">
-        <div class="right">
-          <div class="title">
-            <p>{{ title }}</p>
-            <i class="iconfont icon-right auto-right"></i>
-            <span>全卷共{{ topicCount[0] + topicCount[1] + topicCount[2] }}题 <i class="iconfont icon-time"></i>倒计时：<b>{{
-              time }}</b>分钟</span>
-          </div>
-          <div class="content">
-            <p class="topic"><span class="number">{{ number }}</span>{{ showQuestion }}</p>
-            <div v-if="currentType == 1">
-              <el-radio-group v-model="radio[index]" @change="getChangeLabel">
-                <el-radio :label="1">{{ showAnswer.answerA }}</el-radio>
-                <el-radio :label="2">{{ showAnswer.answerB }}</el-radio>
-                <el-radio :label="3">{{ showAnswer.answerC }}</el-radio>
-                <el-radio :label="4">{{ showAnswer.answerD }}</el-radio>
-              </el-radio-group>
-              <div class="analysis" v-if="isPractice">
-                <ul>
-                  <li><el-tag type="success">正确姿势：</el-tag><span class="right">{{ reduceAnswer.rightAnswer }}</span>
-                  </li>
-                  <li><el-tag>题目解析：</el-tag></li>
-                  <li>{{ reduceAnswer.analysis == null ? '暂无解析' : reduceAnswer.analysis }}</li>
-                </ul>
+        <div class="answer-area">
+          <div class="answer-container">
+            <!-- 标题栏 -->
+            <div class="header">
+              <h2 class="question-title">{{ title }}</h2>
+              <div class="exam-status">
+                <span>总题数：{{ topicCount[0] + topicCount[1] + topicCount[2] }}题</span>
+                <el-divider direction="vertical" />
+                <span class="time-wrapper">
+                  <el-icon>
+                    <Timer />
+                  </el-icon>
+                  剩余时间：<span class="time">{{ time }}</span> 分钟
+                </span>
               </div>
             </div>
-            <div class="fill" v-if="currentType == 2">
-              <div v-for="(item, currentIndex) in part" :key="currentIndex">
-                <el-input placeholder="请填在此处" v-model="fillAnswer[index][currentIndex]" clearable @blur="fillBG">
-                </el-input>
+
+            <!-- 题目内容区 -->
+            <div class="question-content">
+              <!-- 题目文本 -->
+              <div class="question-text">
+                <span class="question-number">{{ number }}</span>
+                <p>{{ showQuestion }}</p>
               </div>
-              <div class="analysis" v-if="isPractice">
-                <ul>
-                  <li><el-tag type="success">正确姿势：</el-tag><span class="right">{{ topic[2][index].answer }}</span></li>
-                  <li><el-tag>题目解析：</el-tag></li>
-                  <li>{{ topic[2][index].analysis == null ? '暂无解析' : topic[2][index].analysis }}</li>
-                </ul>
+
+              <!-- 选择题 -->
+              <div v-if="currentType == 1" class="choice-question">
+                <el-radio-group v-model="radio[index]" @change="getChangeLabel">
+                  <el-radio v-for="(option, idx) in ['A', 'B', 'C', 'D']" :key="idx" :label="idx + 1"
+                    class="answer-option">
+                    {{ showAnswer[`answer${option}`] }}
+                  </el-radio>
+                </el-radio-group>
+              </div>
+
+              <!-- 填空题 -->
+              <div v-if="currentType == 2" class="fill-question">
+                <div v-for="(item, currentIndex) in part" :key="currentIndex" class="fill-item">
+                  <div class="fill-number">填空 {{ currentIndex + 1 }}</div>
+                  <el-input v-model="fillAnswer[index][currentIndex]" placeholder="请在此处填写答案" clearable @blur="fillBG">
+                    <template #prefix>
+                      <el-icon>
+                        <Edit />
+                      </el-icon>
+                    </template>
+                  </el-input>
+                </div>
+              </div>
+
+              <!-- 判断题 -->
+              <div v-if="currentType == 3" class="judge-question">
+                <el-radio-group v-model="judgeAnswer[index]" @change="getJudgeLabel">
+                  <el-radio :label="1" class="answer-option">
+                    <el-icon><Select /></el-icon> 正确
+                  </el-radio>
+                  <el-radio :label="2" class="answer-option">
+                    <el-icon>
+                      <Close />
+                    </el-icon> 错误
+                  </el-radio>
+                </el-radio-group>
+              </div>
+
+              <!-- 解析区域 -->
+              <div v-if="isPractice" class="answer-analysis">
+                <el-alert title="答案解析" type="success" :closable="false">
+                  <template #default>
+                    <div class="analysis-content">
+                      <div class="correct-answer">
+                        <strong>正确答案：</strong>
+                        <span v-if="currentType == 1">{{ reduceAnswer.rightAnswer }}</span>
+                        <span v-if="currentType == 2">{{ topic[2][index].answer }}</span>
+                        <span v-if="currentType == 3">{{ topic[3][index].answer }}</span>
+                      </div>
+                      <div class="explanation">
+                        <strong>解析：</strong>
+                        <p v-if="currentType == 1">
+                          {{ reduceAnswer.analysis || '暂无解析' }}
+                        </p>
+                        <p v-if="currentType == 2">
+                          {{ topic[2][index].analysis || '暂无解析' }}
+                        </p>
+                        <p v-if="currentType == 3">
+                          {{ topic[3][index].analysis || '暂无解析' }}
+                        </p>
+                      </div>
+                    </div>
+                  </template>
+                </el-alert>
               </div>
             </div>
-            <div class="judge" v-if="currentType == 3">
-              <el-radio-group v-model="judgeAnswer[index]" @change="getJudgeLabel">
-                <el-radio :label="1">正确</el-radio>
-                <el-radio :label="2">错误</el-radio>
-              </el-radio-group>
-              <div class="analysis" v-if="isPractice">
-                <ul>
-                  <li><el-tag type="success">正确姿势：</el-tag><span class="right">{{ topic[3][index].answer }}</span></li>
-                  <li><el-tag>题目解析：</el-tag></li>
-                  <li>{{ topic[3][index].analysis == null ? '暂无解析' : topic[3][index].analysis }}</li>
-                </ul>
-              </div>
+
+            <!-- 操作按钮 -->
+            <div class="question-actions">
+              <el-button-group>
+                <el-button type="primary" @click="previous" :icon="ArrowLeft">
+                  上一题
+                </el-button>
+                <el-button @click="mark" :type="isCurrentQuestionMarked ? 'info' : 'warning'" :icon="Flag">
+                  {{ isCurrentQuestionMarked ? '取消标记' : '标记题目' }}
+                </el-button>
+                <el-button type="primary" @click="next">
+                  下一题
+                  <el-icon class="el-icon--right">
+                    <ArrowRight />
+                  </el-icon>
+                </el-button>
+              </el-button-group>
             </div>
-          </div>
-          <div class="operation">
-            <ul class="end">
-              <li @click="previous()"><i class="iconfont icon-previous"></i><span>上一题</span></li>
-              <li @click="mark()"><i class="iconfont icon-mark-o"></i><span>标记</span></li>
-              <li @click="next()"><span>下一题</span><i class="iconfont icon-next"></i></li>
-            </ul>
           </div>
         </div>
       </transition>
@@ -152,6 +263,7 @@ import { useStore } from '@/stores/store';
 import { useCookies } from 'vue3-cookies';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import axios from 'axios';
+import { Fold, Expand, UserFilled, Select, Edit, Check, Timer, Monitor, ArrowLeft, ArrowRight, Flag, Close } from '@element-plus/icons-vue'
 
 // 初始化 cookies
 const { cookies } = useCookies();
@@ -309,37 +421,52 @@ const fillBG = () => { //填空题已答题目 如果已答该题目,设置第�
   }
 };
 
-const fill = (index) => { //填空题
+const fill = (idx) => { //填空题
+  console.log('fill function called with idx:', idx);
   let len = topic.value[2].length;
+  console.log('填空题总数:', len);
   currentType.value = 2;
-  index.value = index;
-  if (index < len) {
-    if (index < 0) {
-      index = topic.value[1].length - 1;
-      change(index);
+
+  // 使用全局的 index ref
+  index.value = idx;
+  console.log('Current index value:', index.value);
+
+  if (idx < len) {
+    if (idx < 0) {
+      index.value = topic.value[1].length - 1;
+      change(index.value);
     } else {
-      console.log(`总长度${len}`);
-      console.log(`当前index:${index}`);
+      console.log(`当前填空题索引: ${idx}`);
       title.value = "请在横线处填写答案";
       let Data = topic.value[2];
-      console.log(Data);
-      showQuestion.value = Data[index].question; //获取题目信息
-      let part = showQuestion.value.split("()").length - 1; //根据题目中括号的数量确定填空横线数量
-      part.value = part;
-      number.value = topicCount.value[0] + index + 1;
+      console.log('填空题数据:', Data[idx]);
+      showQuestion.value = Data[idx].question; //获取题目信息
+
+      // 修复 part 的赋值
+      let partCount = showQuestion.value.split("()").length - 1; //根据题目中括号的数量确定填空横线数量
+      part.value = partCount;
+      console.log('填空数量:', partCount);
+
+      number.value = topicCount.value[0] + idx + 1;
     }
-  } else if (index >= len) {
+  } else if (idx >= len) {
     index.value = 0;
     judge(index.value);
   }
 };
 
-const judge = (index) => { //判断题
+const judge = (idx) => { //判断题
+  console.log('judge function called with idx:', idx);
   let len = topic.value[3].length;
+  console.log('topic[3] length:', len);
   currentType.value = 3;
-  index.value = index;
-  if (index < len) {
-    if (index < 0) {
+
+  // 使用全局的 index ref
+  index.value = idx;
+  console.log('Current index value:', index.value);
+
+  if (idx < len) {
+    if (idx < 0) {
       index.value = topic.value[2].length - 1;
       fill(index.value);
     } else {
@@ -347,11 +474,11 @@ const judge = (index) => { //判断题
       console.log(`当前index:${index.value}`);
       title.value = "请作出正确判断";
       let Data = topic.value[3];
-      console.log(Data);
+      console.log('Question data:', Data);
       showQuestion.value = Data[index.value].question; //获取题目信息
-      number.value = topicCount.value[0] + topicCount.value[1] + index + 1;
+      number.value = topicCount.value[0] + topicCount.value[1] + index.value + 1;
     }
-  } else if (index >= len) {
+  } else if (idx >= len) {
     index.value = 0;
     change(index.value);
   }
@@ -410,13 +537,17 @@ const next = () => { //下一题
 const mark = () => { //标记功能
   switch (currentType.value) {
     case 1:
-      topic.value[1][index.value]["isMark"] = true; //选择题标记
+      // 选择题标记切换
+      topic.value[1][index.value].isMark = !topic.value[1][index.value].isMark;
       break;
     case 2:
-      topic.value[2][index.value]["isMark"] = true; //填空题标记
+      // 填空题标记切换
+      topic.value[2][index.value].isMark = !topic.value[2][index.value].isMark;
       break;
     case 3:
-      topic.value[3][index.value]["isMark"] = true; //判断题标记
+      // 判断题标记切换
+      topic.value[3][index.value].isMark = !topic.value[3][index.value].isMark;
+      break;
   }
 };
 
@@ -526,9 +657,130 @@ const showTime = () => {
     }
   }, 1000 * 60);
 };
+const isCurrentQuestionMarked = computed(() => {
+  // 首先检查 topic.value 是否存在且是否有对应类型的题目数组
+  if (!topic.value || !topic.value[currentType.value]) {
+    return false;
+  }
+
+  try {
+    switch (currentType.value) {
+      case 1:
+        return topic.value[1]?.[index.value]?.isMark ?? false;
+      case 2:
+        return topic.value[2]?.[index.value]?.isMark ?? false;
+      case 3:
+        return topic.value[3]?.[index.value]?.isMark ?? false;
+      default:
+        return false;
+    }
+  } catch (error) {
+    console.error('计算标记状态时出错:', error);
+    return false;
+  }
+});
+
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
+.nav-header {
+  background-color: #fff;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+
+  .nav-content {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .left-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .logo {
+        font-size: 24px;
+        color: var(--el-color-primary);
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--el-color-primary);
+        border-radius: 6px;
+      }
+
+      .menu-toggle {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: var(--el-text-color-regular);
+
+        &:hover {
+          background-color: var(--el-fill-color-light);
+          color: var(--el-color-primary);
+        }
+
+        .el-icon {
+          font-size: 16px;
+        }
+
+        span {
+          margin-left: 4px;
+        }
+      }
+
+      .exam-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 15px;
+
+        .exam-type {
+          font-weight: 500;
+          color: var(--el-text-color-primary);
+        }
+
+        .exam-source {
+          color: var(--el-text-color-regular);
+        }
+
+        .el-divider {
+          margin: 0;
+        }
+      }
+    }
+  }
+}
+
+// 用户信息下拉框样式
+.user-detail {
+  padding: 8px 16px;
+  min-width: 200px;
+
+  .detail-item {
+    display: flex;
+    padding: 4px 0;
+
+    .label {
+      color: var(--el-text-color-secondary);
+      width: 70px;
+    }
+
+    .value {
+      color: var(--el-text-color-primary);
+      font-weight: 500;
+    }
+  }
+}
+
 /* 保持原有样式不变 */
 .iconfont.icon-time {
   color: #2776df;
@@ -875,5 +1127,331 @@ const showTime = () => {
   font-size: 16px;
   width: 200px;
   text-align: left;
+}
+
+.question-nav {
+  width: 360px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  // 状态图例样式
+  .status-legend {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+
+    .legend-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+
+      .status-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 2px solid var(--el-border-color);
+
+        &.current {
+          border-color: var(--el-color-primary);
+          background: var(--el-color-primary-light-9);
+        }
+
+        &.answered {
+          background: var(--el-color-primary);
+          border-color: var(--el-color-primary);
+        }
+
+        &.marked {
+          position: relative;
+
+          &::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            border: 8px solid var(--el-color-danger);
+            border-left-color: transparent;
+            border-bottom-color: transparent;
+            border-radius: 0 4px 0 0;
+          }
+        }
+      }
+
+      span {
+        font-size: 13px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+  }
+
+  // 题目列表样式
+  .question-list {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+
+    .question-section {
+      margin-bottom: 24px;
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding-left: 8px;
+        border-left: 3px solid var(--el-color-primary);
+
+        .el-icon {
+          font-size: 16px;
+          color: var(--el-color-primary);
+        }
+
+        span {
+          font-size: 15px;
+          font-weight: 500;
+          color: var(--el-text-color-primary);
+        }
+      }
+
+      .number-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+
+        .number-box {
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid var(--el-border-color);
+          border-radius: 6px;
+          font-size: 14px;
+          color: var(--el-text-color-regular);
+          cursor: pointer;
+          transition: all 0.3s;
+
+          &:hover {
+            border-color: var(--el-color-primary);
+          }
+
+          &.current {
+            border-color: var(--el-color-primary);
+            background: var(--el-color-primary-light-9);
+            color: var(--el-color-primary);
+          }
+
+          &.answered {
+            background: var(--el-color-primary);
+            border-color: var(--el-color-primary);
+            color: #fff;
+          }
+
+          &.marked {
+            position: relative;
+
+            &::after {
+              content: '';
+              position: absolute;
+              top: -2px;
+              right: -2px;
+              border: 8px solid var(--el-color-danger);
+              border-left-color: transparent;
+              border-bottom-color: transparent;
+              border-radius: 0 4px 0 0;
+            }
+          }
+        }
+      }
+    }
+
+    // 结束考试按钮
+    .submit-btn {
+      width: 100%;
+      margin-top: 24px;
+      height: 40px;
+      font-size: 15px;
+    }
+  }
+}
+
+// 滚动条美化
+.question-list {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f5f7fa;
+  }
+}
+
+// 过渡动画
+.slider-fade-enter-active,
+.slider-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slider-fade-enter-from,
+.slider-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.answer-area {
+  flex: 1;
+  padding: 20px;
+
+  .answer-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+
+    .header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .question-title {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+        margin: 0;
+      }
+
+      .exam-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--el-text-color-regular);
+
+        .time-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          .time {
+            color: var(--el-color-danger);
+            font-weight: 600;
+          }
+        }
+      }
+    }
+
+    .question-content {
+      padding: 24px;
+      min-height: 400px;
+
+      .question-text {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+
+        .question-number {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--el-color-primary);
+          color: #fff;
+          border-radius: 6px;
+          font-size: 14px;
+        }
+
+        p {
+          margin: 0;
+          font-size: 15px;
+          line-height: 1.6;
+        }
+      }
+
+      .choice-question,
+      .fill-question,
+      .judge-question {
+        .el-radio-group {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+
+          .answer-option {
+            margin: 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--el-border-color-lighter);
+
+            &:hover {
+              background: var(--el-fill-color-light);
+            }
+          }
+        }
+      }
+
+      .fill-question {
+        .fill-item {
+          margin-bottom: 16px;
+
+          .fill-number {
+            color: var(--el-text-color-secondary);
+            font-size: 13px;
+            margin-bottom: 4px;
+          }
+        }
+      }
+
+      .answer-analysis {
+        margin-top: 24px;
+
+        .analysis-content {
+          padding: 12px 0;
+
+          .correct-answer {
+            margin-bottom: 12px;
+          }
+
+          .explanation {
+            p {
+              margin: 8px 0 0;
+              color: var(--el-text-color-secondary);
+            }
+          }
+        }
+      }
+    }
+
+    .question-actions {
+      padding: 16px 24px;
+      border-top: 1px solid var(--el-border-color-lighter);
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+  }
+}
+
+// 过渡动画
+.slider-fade-enter-active,
+.slider-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slider-fade-enter-from,
+.slider-fade-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
 }
 </style>
