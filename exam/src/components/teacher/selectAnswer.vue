@@ -1,7 +1,12 @@
 <template>
-    <div class="exam-container">
+    <div class="select-container">
         <div class="header">
-            <h2 class="title">题库管理</h2>
+            <h2 class="title">
+                <el-icon>
+                    <Files />
+                </el-icon>
+                题库管理
+            </h2>
             <div class="search-box">
                 <el-input v-model="searchQuery" placeholder="搜索试题..." :prefix-icon="Search" clearable
                     @clear="getAnswerInfo" @keyup.enter="handleSearch">
@@ -55,7 +60,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Document, Search } from '@element-plus/icons-vue'
+import { Document, Search, Files } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 const searchQuery = ref('')
@@ -124,7 +129,7 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.exam-container {
+.select-container {
     padding: 20px 40px;
     background-color: #f5f7fa;
     min-height: 100vh;
@@ -139,51 +144,18 @@ onMounted(() => {
             font-size: 24px;
             color: #303133;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .el-icon {
+                margin-right: 4px;
+            }
         }
 
         .search-box {
             width: 300px;
-
-            :deep(.el-input-group__append) {
-                background-color: #409eff;
-                border-color: #409eff;
-                color: #fff;
-
-                .el-button {
-                    color: #fff;
-                    border: none;
-
-                    &:hover {
-                        background-color: #66b1ff;
-                    }
-                }
-            }
         }
-    }
-
-    .table-container {
-        background: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-
-        .subject-cell {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .score {
-            color: #f56c6c;
-            font-weight: bold;
-        }
-    }
-
-    .pagination {
-        margin-top: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
     }
 }
 

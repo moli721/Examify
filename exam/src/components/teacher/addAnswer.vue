@@ -113,10 +113,10 @@ import {
 const router = useRouter()
 
 const pagination = ref({
-    current: 1,
-    total: null,
-    size: 4,
-    records: []
+    current: 1,//当前页
+    total: null,//记录条数
+    size: 4,//每页条数
+    records: []//数据记录
 })
 
 const headerStyle = {
