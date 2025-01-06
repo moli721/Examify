@@ -1,33 +1,71 @@
 <template>
-    <div class="exam">
-        <el-table :data="pagination.records" border :row-class-name="tableRowClassName">
-            <el-table-column fixed="left" prop="subject" label="试卷名称" width="180" />
-            <el-table-column prop="question" label="题目信息" width="490" />
-            <el-table-column prop="section" label="所属章节" width="200" />
-            <el-table-column prop="type" label="题目类型" width="200" />
-            <el-table-column prop="score" label="试题分数" width="150" />
-            <el-table-column prop="level" label="难度等级" width="133" />
-        </el-table>
+    <div class="exam-container">
+        <div class="header">
+            <h2 class="title">题库管理</h2>
+            <div class="search-box">
+                <el-input v-model="searchQuery" placeholder="搜索试题..." :prefix-icon="Search" clearable
+                    @clear="getAnswerInfo" @keyup.enter="handleSearch">
+                    <template #append>
+                        <el-button :icon="Search" @click="handleSearch">
+                            搜索
+                        </el-button>
+                    </template>
+                </el-input>
+            </div>
+        </div>
 
-        <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
-            :page-sizes="[6, 10]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange" @current-change="handleCurrentChange" class="page" />
+        <div class="table-container">
+            <el-table :data="pagination.records" border :row-class-name="tableRowClassName"
+                :header-cell-style="headerStyle" highlight-current-row @row-click="handleRowClick">
+                <el-table-column fixed="left" prop="subject" label="试卷名称" width="180">
+                    <template #default="scope">
+                        <div class="subject-cell">
+                            <el-icon>
+                                <Document />
+                            </el-icon>
+                            <span>{{ scope.row.subject }}</span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="question" label="题目信息" width="490" show-overflow-tooltip />
+                <el-table-column prop="section" label="所属章节" width="200" />
+                <el-table-column prop="type" label="题目类型" width="200">
+                    <template #default="scope">
+                        <el-tag :type="getTypeTag(scope.row.type)">{{ scope.row.type }}</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="score" label="试题分数" width="150">
+                    <template #default="scope">
+                        <span class="score">{{ scope.row.score }}分</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="level" label="难度等级" width="133">
+                    <template #default="scope">
+                        <el-rate v-model="scope.row.level" disabled text-color="#ff9900" show-score />
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
+                :page-sizes="[6, 10, 20]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
+                @size-change="handleSizeChange" @current-change="handleCurrentChange" class="pagination" />
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { Document, Search } from '@element-plus/icons-vue'
 import axios from 'axios'
 
-// 分页数据
+const searchQuery = ref('')
 const pagination = ref({
-    current: 1, // 当前页
-    total: null, // 记录条数
-    size: 6, // 每页条数
-    records: [] // 数据记录
+    current: 1,
+    total: null,
+    size: 6,
+    records: []
 })
 
-// 获取题库信息
 const getAnswerInfo = async () => {
     try {
         const res = await axios.get(
@@ -41,54 +79,146 @@ const getAnswerInfo = async () => {
     }
 }
 
-// 改变每页记录条数
 const handleSizeChange = (val) => {
     pagination.value.size = val
     getAnswerInfo()
 }
 
-// 改变当前页码
 const handleCurrentChange = (val) => {
     pagination.value.current = val
     getAnswerInfo()
 }
 
-// 表格行样式
-const tableRowClassName = ({ rowIndex }) => {
-    return rowIndex % 2 === 0 ? 'warning-row' : 'success-row'
+const handleSearch = () => {
+    // 实现搜索功能
+    getAnswerInfo()
 }
 
-// 组件挂载时获取数据
+const handleRowClick = (row) => {
+    // 点击行的处理逻辑
+    console.log('选中的行:', row)
+}
+
+const headerStyle = {
+    background: '#f5f7fa',
+    color: '#606266',
+    fontWeight: 'bold',
+}
+
+const getTypeTag = (type) => {
+    const typeMap = {
+        '选择题': 'primary',
+        '判断题': 'success',
+        '填空题': 'warning'
+    }
+    return typeMap[type] || 'info'
+}
+
+const tableRowClassName = ({ rowIndex }) => {
+    return rowIndex % 2 === 0 ? 'even-row' : 'odd-row'
+}
+
 onMounted(() => {
     getAnswerInfo()
 })
 </script>
 
 <style lang="less" scoped>
-.exam {
-    padding: 0px 40px;
+.exam-container {
+    padding: 20px 40px;
+    background-color: #f5f7fa;
+    min-height: 100vh;
 
-    .page {
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+
+        .title {
+            font-size: 24px;
+            color: #303133;
+            margin: 0;
+        }
+
+        .search-box {
+            width: 300px;
+
+            :deep(.el-input-group__append) {
+                background-color: #409eff;
+                border-color: #409eff;
+                color: #fff;
+
+                .el-button {
+                    color: #fff;
+                    border: none;
+
+                    &:hover {
+                        background-color: #66b1ff;
+                    }
+                }
+            }
+        }
+    }
+
+    .table-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+
+        .subject-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .score {
+            color: #f56c6c;
+            font-weight: bold;
+        }
+    }
+
+    .pagination {
         margin-top: 20px;
         display: flex;
         justify-content: center;
         align-items: center;
     }
+}
 
-    .edit {
-        margin-left: 20px;
+:deep(.el-table) {
+    border-radius: 4px;
+    overflow: hidden;
+
+    .even-row {
+        background-color: #fafafa;
     }
 
-    :deep(.el-table tr) {
-        background-color: #DD5862 !important;
+    .odd-row {
+        background-color: #ffffff;
+    }
+
+    th {
+        background-color: #f5f7fa !important;
+    }
+
+    td {
+        padding: 12px 0;
     }
 }
 
-:deep(.el-table .warning-row) {
-    background: #000 !important;
+:deep(.el-tag) {
+    border-radius: 4px;
 }
 
-:deep(.el-table .success-row) {
-    background: #DD5862;
+:deep(.el-input) {
+    .el-input__wrapper {
+        box-shadow: 0 0 0 1px #dcdfe6 inset;
+
+        &:hover {
+            box-shadow: 0 0 0 1px #409eff inset;
+        }
+    }
 }
 </style>
