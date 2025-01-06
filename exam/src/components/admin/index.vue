@@ -6,7 +6,7 @@
                 <MainLeft />
             </div>
             <div class="content-container">
-                <Navigator class="navigator" />
+                <!-- <Navigator class="navigator" /> -->
                 <div class="page-content">
                     <router-view></router-view>
                 </div>
@@ -79,7 +79,7 @@ const isCollapsed = computed(() => store.state.isCollapsed)
         }
 
         .page-content {
-            background: #fff;
+            background: #f5f7fa;
             border-radius: 0.25rem;
             box-shadow: 0 0.5rem 1rem 0 rgba(44, 51, 73, 0.1);
             padding: 1.25rem;
