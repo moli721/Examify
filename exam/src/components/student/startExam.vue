@@ -15,23 +15,23 @@
             <div class="filters">
                 <div class="status-tabs">
                     <div class="tab" :class="{ active: currentTab === 'all' }" @click="currentTab = 'all'">
-                        <el-badge :value="12" class="badge">
+                        <el-badge :value="getTotalCount()" class="badge">
                             <span>全部</span>
                         </el-badge>
                     </div>
                     <div class="tab" :class="{ active: currentTab === 'pending' }" @click="currentTab = 'pending'">
-                        <el-badge :value="1" class="badge success">
+                        <el-badge :value="getStatusCount('NOT_STARTED')" class="badge success">
                             <span>未开始</span>
                         </el-badge>
                     </div>
                     <div class="tab" :class="{ active: currentTab === 'ongoing' }" @click="currentTab = 'ongoing'">
-                        <el-badge :value="2" class="badge warning">
-                            <span>已开始</span>
+                        <el-badge :value="getStatusCount('IN_PROGRESS')" class="badge warning">
+                            <span>进行中</span>
                         </el-badge>
                     </div>
                     <div class="tab" :class="{ active: currentTab === 'expired' }" @click="currentTab = 'expired'">
-                        <el-badge :value="1" class="badge info">
-                            <span>已过期</span>
+                        <el-badge :value="getStatusCount('FINISHED')" class="badge info">
+                            <span>已结束</span>
                         </el-badge>
                     </div>
                 </div>
@@ -50,95 +50,259 @@
             </div>
 
             <div class="exam-grid" v-loading="loading">
-                <div v-for="(item, index) in pagination.records" :key="index" class="exam-card"
-                    @click="toExamMsg(item.examCode)">
+                <div v-for="record in pagination.records" :key="record.exam.id" class="exam-card"
+                    @click="toExamMsg(record.exam.id)">
                     <div class="exam-header">
-                        <h3>{{ item.source }}</h3>
-                        <span class="exam-type">期末考试</span>
+                        <h3>{{ record.exam.title }}</h3>
+                        <div class="status-badges">
+                            <span class="exam-type">{{ record.exam.type }}</span>
+                            <span :class="['status-tag', getStatusClass(record.status)]">
+                                {{ getStatusText(record.status) }}
+                            </span>
+                        </div>
                     </div>
-                    <p class="exam-desc">{{ item.description }}</p>
+                    <p class="exam-desc">{{ record.exam.subject }}</p>
                     <div class="exam-info">
                         <div class="info-item">
                             <i class="el-icon-date"></i>
-                            <span>{{ item.examDate.substr(0, 10) }}</span>
+                            <span>{{ formatDateTime(record.exam.startTime) }} - {{ formatDateTime(record.exam.endTime)
+                                }}</span>
                         </div>
-                        <div class="info-item" v-if="item.totalTime">
+                        <div class="info-item">
                             <i class="el-icon-time"></i>
-                            <span>限时 {{ item.totalTime }} 分钟</span>
+                            <span>限时 {{ record.exam.duration }} 分钟</span>
                         </div>
                         <div class="info-item">
                             <i class="el-icon-trophy"></i>
-                            <span>满分 {{ item.totalScore }} 分</span>
+                            <span>满分 {{ record.exam.totalScore }} 分</span>
                         </div>
+                    </div>
+                    <div class="exam-meta">
+                        <span class="meta-item">
+                            <i class="el-icon-school"></i>
+                            {{ record.exam.institute }}
+                        </span>
+                        <span class="meta-item">
+                            <i class="el-icon-notebook-2"></i>
+                            {{ record.exam.major }}
+                        </span>
+                        <span class="meta-item">
+                            <i class="el-icon-date"></i>
+                            {{ record.exam.grade }}级 第{{ record.exam.term }}学期
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <div class="pagination">
-                <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
-                    :current-page="pagination.current" :page-sizes="[6, 12, 24, 36]" :page-size="pagination.size"
-                    layout="total, sizes, prev, pager, next, jumper" :total="pagination.total" background>
-                </el-pagination>
+            <div class="pagination-container">
+                <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
+                    :page-sizes="[6, 12, 18, 24]" :total="pagination.total"
+                    layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange" background />
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
+import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import axios from 'axios'
 import { Edit } from '@element-plus/icons-vue'
 
-const loading = ref(false);
-const key = ref(null);
+// 添加日期格式化函数
+const formatDateTime = (dateStr) => {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+const loading = ref(false)
+const key = ref('')
+const currentTab = ref('all')
 const pagination = ref({
     current: 1,
-    total: null,
+    total: 0,
     size: 6,
-});
+    records: []
+})
 
-const getExamInfo = () => {
-    loading.value = true;
-    axios(`/exams/${pagination.value.current}/${pagination.value.size}`).then(res => {
-        pagination.value = res.data.data;
-        loading.value = false;
-    }).catch(error => {
-        console.log(error);
-        loading.value = false;
-    });
-};
+// 添加状态计数的响应式数据
+const statusCounts = ref({
+    total: 0,
+    NOT_STARTED: 0,
+    IN_PROGRESS: 0,
+    FINISHED: 0
+})
 
-const handleSizeChange = (val) => {
-    pagination.value.size = val;
-    getExamInfo();
-};
+// 获取总数
+const getTotalCount = () => {
+    return statusCounts.value.total || 0
+}
 
-const handleCurrentChange = (val) => {
-    pagination.value.current = val;
-    getExamInfo();
-};
+// 获取特定状态的数量
+const getStatusCount = (status) => {
+    return statusCounts.value[status] || 0
+}
 
-const search = () => {
-    axios('/exams').then(res => {
-        if (res.data.code === 200) {
-            const allExam = res.data.data;
-            const newPage = allExam.filter(item => item.source.includes(key.value));
-            pagination.value.records = newPage;
+// 更新状态计数
+const updateStatusCounts = (records) => {
+    const counts = {
+        total: 0,
+        NOT_STARTED: 0,
+        IN_PROGRESS: 0,
+        FINISHED: 0
+    }
+
+    records.forEach(record => {
+        counts.total++
+        counts[record.status] = (counts[record.status] || 0) + 1
+    })
+
+    statusCounts.value = counts
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+    switch (status) {
+        case 'NOT_STARTED': return '未开始'
+        case 'IN_PROGRESS': return '进行中'
+        case 'FINISHED': return '已结束'
+        default: return '未知状态'
+    }
+}
+
+// 获取状态样式类
+const getStatusClass = (status) => {
+    switch (status) {
+        case 'NOT_STARTED': return 'status-pending'
+        case 'IN_PROGRESS': return 'status-ongoing'
+        case 'FINISHED': return 'status-finished'
+        default: return 'status-unknown'
+    }
+}
+
+// 获取考试信息
+const getExamInfo = async () => {
+    loading.value = true
+    try {
+        // 首先获取所有考试的状态来更新计数
+        const statusRes = await axios.get('/exams/status', {
+            params: {
+                page: 1,
+                size: 999 // 获取所有记录以计算总数
+            },
+            withCredentials: true
+        })
+
+        if (statusRes.data.code === 200) {
+            updateStatusCounts(statusRes.data.data.records)
         }
-    });
-};
 
-const router = useRouter();
-const toExamMsg = (examCode) => {
-    router.push({ path: '/student/examMsg', query: { examCode: examCode } });
-};
+        // 然后获取当前页的考试数据
+        const url = currentTab.value === 'all' ? '/exams/status' : '/exams'
+        const params = {
+            page: pagination.value.current,
+            size: pagination.value.size
+        }
 
-const currentTab = ref('all');
+        if (currentTab.value !== 'all') {
+            params.status = getStatusValue(currentTab.value)
+        }
+
+        const res = await axios.get(url, {
+            params,
+            withCredentials: true
+        })
+
+        if (res.data.code === 200) {
+            pagination.value = res.data.data
+        } else {
+            ElMessage.warning(res.data.msg || '获取试卷列表失败')
+        }
+    } catch (error) {
+        console.error('获取试卷列表失败:', error)
+        ElMessage.error('获取试卷列表失败')
+    } finally {
+        loading.value = false
+    }
+}
+
+// 修改状态值映射
+const getStatusValue = (tab) => {
+    switch (tab) {
+        case 'pending': return 0    // 未开始
+        case 'ongoing': return 1    // 进行中
+        case 'expired': return 2    // 已结束
+        default: return null        // 全部
+    }
+}
+
+// 处理页码改变
+const handleCurrentChange = (val) => {
+    pagination.value.current = val
+    getExamInfo()
+}
+
+// 处理每页数量改变
+const handleSizeChange = (val) => {
+    pagination.value.size = val
+    pagination.value.current = 1  // 重置到第一页
+    getExamInfo()
+}
+
+// 搜索功能
+const search = async () => {
+    if (!key.value) {
+        ElMessage.warning('请输入搜索关键词')
+        return
+    }
+
+    loading.value = true
+    try {
+        const res = await axios.get('/exams', {
+            params: {
+                page: 1,
+                size: pagination.value.size,
+                status: getStatusValue(currentTab.value),
+                key: key.value
+            },
+            withCredentials: true
+        })
+
+        if (res.data.code === 200) {
+            pagination.value = {
+                ...pagination.value,
+                current: 1,
+                records: res.data.data.records || [],
+                total: res.data.data.total || 0
+            }
+        } else {
+            ElMessage.warning(res.data.msg || '搜索失败')
+        }
+    } catch (error) {
+        ElMessage.error('搜索失败')
+    } finally {
+        loading.value = false
+    }
+}
+
+const router = useRouter()
+const toExamMsg = (id) => {
+    router.push({ path: '/student/examMsg', query: { id } })
+}
+
+// 监听标签切换
+watch(currentTab, (newVal) => {
+    console.log('切换到状态:', newVal)  // 添加日志
+    pagination.value.current = 1    // 重置页码
+    getExamInfo()                   // 重新获取数据
+})
 
 onMounted(() => {
-    getExamInfo();
-});
+    getExamInfo()
+})
 </script>
 
 <style lang="less" scoped>
@@ -390,6 +554,59 @@ onMounted(() => {
     display: flex;
     justify-content: center;
     margin-top: 2rem;
+}
+
+.status-badges {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.status-tag {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+
+    &.status-pending {
+        background: #e6f7ff;
+        color: #1890ff;
+    }
+
+    &.status-ongoing {
+        background: #f6ffed;
+        color: #52c41a;
+    }
+
+    &.status-finished {
+        background: #f5f5f5;
+        color: #595959;
+    }
+
+    &.status-unknown {
+        background: #fff1f0;
+        color: #f5222d;
+    }
+}
+
+.exam-meta {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #666;
+        font-size: 0.9rem;
+
+        i {
+            color: var(--el-color-primary);
+        }
+    }
 }
 
 @media (max-width: 768px) {

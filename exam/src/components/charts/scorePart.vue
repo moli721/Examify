@@ -43,17 +43,24 @@ const category = {
 
 // 获取成绩信息并绘制图表
 const getScoreInfo = async () => {
-    const examCode = route.query.examCode
-    name.value = route.query.source
+    const id = route.query.id
+    name.value = route.query.title
 
     try {
-        const res = await axios.get(`/scores/${examCode}`)
-        const data = res.data.data
-
+        const res = await axios.get(`/scores/byExamId`, {
+            params: {
+                exam_id: id,
+                page: 1,
+                size: 100
+            }
+        })
+        const data = res.data.data.records
+        console.log(data)
         if (data.length > 0) {
             // 统计分数段
             data.forEach(element => {
-                const score = element.etScore / 10
+                const score = element.score / 10
+                console.log('score', score)
                 switch (true) {
                     case score >= 9:
                         category['90分及以上']++

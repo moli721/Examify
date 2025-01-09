@@ -31,6 +31,16 @@ export const useStore = defineStore('user', {
             },
             {
                 index: '3',
+                title: '试卷管理',
+                icon: 'icon-paper',
+                content: [
+                    { item1: '功能介绍', path: '/index/paperDescription' },
+                    { item2: '所有试卷', path: '/index/selectPaper' },
+                    { item3: '创建试卷', path: '/index/addPaper' },
+                ],
+            },
+            {
+                index: '4',
                 title: '成绩查询',
                 icon: 'icon-performance',
                 content: [
@@ -41,7 +51,7 @@ export const useStore = defineStore('user', {
                 ],
             },
             {
-                index: '4',
+                index: '5',
                 title: '学生管理',
                 icon: 'icon-role',
                 content: [

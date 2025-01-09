@@ -1,17 +1,6 @@
 <template>
-    <div class="grade-container">
-        <div class="chart-wrapper">
-            <div ref="chartRef" class="chart-box"></div>
-            <div class="no-data" v-if="isNull">
-                <el-empty description="该考生未参加考试">
-                    <template #image>
-                        <el-icon class="no-data-icon">
-                            <DocumentDelete />
-                        </el-icon>
-                    </template>
-                </el-empty>
-            </div>
-        </div>
+    <div class="chart-container" ref="chartRef">
+        <div v-if="isNull" class="no-data">暂无成绩数据</div>
     </div>
 </template>
 
@@ -35,129 +24,102 @@ const tableDataY = ref([]) // y轴数据 保存分数
 
 // 获取成绩并绘制图表
 const getScore = async () => {
-    const studentId = route.query.studentId
-
+    const examId = route.query.examId
+    console.log('考试ID:', examId)
+    const params = {
+        examId: parseInt(examId), // 确保转换为数字类型
+        page: 1,
+        size: 100
+    }
+    console.log(params)
     try {
-        const res = await axios.get(`/score/${studentId}`)
+        const res = await axios.get('/scores/byExamId', {
+            params: {
+                exam_id: parseInt(examId),
+                page: 1,
+                size: 100
+            }
+        })
 
         if (res.data.code === 200) {
-            const rootData = res.data.data
+            const rootData = res.data.data.records // 注意这里要取 records
 
-            // 处理数据
-            rootData.forEach((element, index) => {
-                tableDataX.value.push(`第${index + 1}次`)
-                tableDataY.value.push(element.etScore)
-            })
+            if (rootData && rootData.length > 0) {
+                // 处理数据
+                rootData.forEach((element, index) => {
+                    tableDataX.value.push(`第${index + 1}次`)
+                    tableDataY.value.push(element.score) // 注意这里应该是 score 而不是 etScore
+                })
 
-            // 初始化图表
-            chartInstance.value = echarts.init(chartRef.value)
+                // 初始化图表
+                chartInstance.value = echarts.init(chartRef.value)
 
-            // 配置项
-            const option = {
-                title: {
-                    text: '考试成绩趋势',
-                    left: 'center',
-                    top: 20,
-                    textStyle: {
-                        color: '#303133',
-                        fontSize: 18,
-                        fontWeight: 'normal'
-                    }
-                },
-                tooltip: {
-                    trigger: 'axis',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    borderColor: '#eee',
-                    borderWidth: 1,
-                    textStyle: {
-                        color: '#606266'
-                    },
-                    formatter: (params) => {
-                        const data = params[0]
-                        return `${data.name}<br/>分数：<b style="color: #409EFF">${data.value}</b>`
-                    }
-                },
-                grid: {
-                    top: 80,
-                    left: 50,
-                    right: 50,
-                    bottom: 50,
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: tableDataX.value,
-                    axisLine: {
-                        lineStyle: {
-                            color: '#dcdfe6'
+                // 配置项
+                const option = {
+                    title: {
+                        text: '考试成绩趋势',
+                        left: 'center',
+                        top: 20,
+                        textStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold'
                         }
                     },
-                    axisLabel: {
-                        color: '#606266'
-                    }
-                },
-                yAxis: {
-                    type: 'value',
-                    name: '分数',
-                    nameTextStyle: {
-                        color: '#909399'
+                    grid: {
+                        top: 80,
+                        bottom: 50,
+                        left: 60,
+                        right: 60
                     },
-                    axisLine: {
-                        show: false
-                    },
-                    axisTick: {
-                        show: false
-                    },
-                    splitLine: {
-                        lineStyle: {
-                            color: '#ebeef5'
+                    xAxis: {
+                        type: 'category',
+                        data: tableDataX.value,
+                        axisLabel: {
+                            fontSize: 14,
+                            interval: 0
                         }
-                    }
-                },
-                series: [
-                    {
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '分数',
+                        nameTextStyle: {
+                            fontSize: 14
+                        },
+                        axisLabel: {
+                            fontSize: 14
+                        },
+                        min: 0,
+                        max: 100,
+                        interval: 20
+                    },
+                    series: [{
                         data: tableDataY.value,
                         type: 'line',
                         smooth: true,
-                        symbolSize: 8,
-                        itemStyle: {
-                            color: '#409EFF'
-                        },
+                        symbolSize: 10,  // 增大数据点的大小
                         lineStyle: {
-                            width: 3
+                            width: 3  // 增加线的粗细
                         },
-                        areaStyle: {
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                {
-                                    offset: 0,
-                                    color: 'rgba(64, 158, 255, 0.2)'
-                                },
-                                {
-                                    offset: 1,
-                                    color: 'rgba(64, 158, 255, 0.05)'
-                                }
-                            ])
+                        itemStyle: {
+                            color: '#409EFF'  // 使用 Element Plus 的主题蓝
                         },
                         label: {
                             show: true,
                             position: 'top',
-                            formatter: '{c}分',
-                            color: '#606266',
-                            backgroundColor: '#fff',
-                            padding: [4, 8],
-                            borderRadius: 4,
-                            shadowColor: 'rgba(0, 0, 0, 0.1)',
-                            shadowBlur: 10
+                            fontSize: 14,
+                            formatter: '{c}分'
                         }
-                    }
-                ]
+                    }]
+                }
+
+                // 设置图表配置
+                chartInstance.value.setOption(option)
+
+                // 监听窗口大小变化
+                window.addEventListener('resize', handleResize)
+            } else {
+                isNull.value = true
             }
-
-            // 设置图表配置
-            chartInstance.value.setOption(option)
-
-            // 监听窗口大小变化
-            window.addEventListener('resize', handleResize)
         } else {
             isNull.value = true
         }
@@ -184,42 +146,23 @@ onMounted(() => {
 })
 </script>
 
-<style lang="less" scoped>
-.grade-container {
-    padding: 20px;
-    background-color: #fff;
+<style scoped>
+.chart-container {
+    width: 100%;
+    height: 600px;
+    /* 增加图表高度 */
+    background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    min-height: 500px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
 
-    .chart-wrapper {
-        position: relative;
-        width: 100%;
-        height: 100%;
-
-        .chart-box {
-            width: 100%;
-            height: 500px;
-        }
-
-        .no-data {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-
-            :deep(.el-empty__image) {
-                .no-data-icon {
-                    font-size: 60px;
-                    color: #909399;
-                }
-            }
-
-            :deep(.el-empty__description) {
-                margin-top: 20px;
-                color: #909399;
-            }
-        }
-    }
+.no-data {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    color: #909399;
 }
 </style>

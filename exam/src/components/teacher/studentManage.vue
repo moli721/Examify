@@ -22,11 +22,11 @@
         <div class="table-container">
             <el-table :data="pagination.records" border :header-cell-style="headerStyle" highlight-current-row
                 :row-class-name="tableRowClassName">
-                <el-table-column fixed="left" prop="studentName" label="姓名" width="120">
+                <el-table-column fixed="left" prop="username" label="姓名" width="120">
                     <template #default="scope">
                         <div class="name-cell">
                             <el-avatar :size="24" :icon="User" />
-                            <span>{{ scope.row.studentName }}</span>
+                            <span>{{ scope.row.username }}</span>
                         </div>
                     </template>
                 </el-table-column>
@@ -45,18 +45,18 @@
                         <el-tag type="warning" size="small">{{ scope.row.grade }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="clazz" label="班级" width="120">
+                <el-table-column prop="classes" label="班级" width="120">
                     <template #default="scope">
-                        <el-tag type="info" size="small">{{ scope.row.clazz }}班</el-tag>
+                        <el-tag type="info" size="small">{{ scope.row.classes }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="sex" label="性别" width="100">
+                <el-table-column prop="gender" label="性别" width="100">
                     <template #default="scope">
-                        <el-icon :color="scope.row.sex === '男' ? '#409EFF' : '#F56C6C'">
-                            <Male v-if="scope.row.sex === '男'" />
+                        <el-icon :color="scope.row.gender === '男' ? '#409EFF' : '#F56C6C'">
+                            <Male v-if="scope.row.gender === '男'" />
                             <Female v-else />
                         </el-icon>
-                        {{ scope.row.sex }}
+                        {{ scope.row.gender }}
                     </template>
                 </el-table-column>
                 <el-table-column prop="tel" label="联系方式" width="150">
@@ -72,12 +72,10 @@
                 <el-table-column fixed="right" label="操作" width="180">
                     <template #default="scope">
                         <div class="action-buttons">
-                            <el-button @click="checkGrade(scope.row.studentId)" type="primary" :icon="Edit"
-                                size="small">
+                            <el-button @click="checkGrade(scope.row.id)" type="primary" :icon="Edit" size="small">
                                 编辑
                             </el-button>
-                            <el-button @click="deleteById(scope.row.studentId)" type="danger" :icon="Delete"
-                                size="small">
+                            <el-button @click="deleteById(scope.row.id)" type="danger" :icon="Delete" size="small">
                                 删除
                             </el-button>
                         </div>
@@ -93,8 +91,11 @@
         <!-- 编辑对话框 -->
         <el-dialog v-model="dialogVisible" title="编辑学生信息" width="30%" :before-close="handleClose" destroy-on-close>
             <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" class="edit-form">
-                <el-form-item label="姓名" prop="studentName">
-                    <el-input v-model="form.studentName" placeholder="请输入学生姓名" />
+                <el-form-item label="学号" prop="id">
+                    <el-input v-model="form.id" placeholder="请输入学号" disabled />
+                </el-form-item>
+                <el-form-item label="姓名" prop="username">
+                    <el-input v-model="form.username" placeholder="请输入学生姓名" />
                 </el-form-item>
                 <el-form-item label="学院" prop="institute">
                     <el-input v-model="form.institute" placeholder="请输入所属学院" />
@@ -105,17 +106,20 @@
                 <el-form-item label="年级" prop="grade">
                     <el-input v-model="form.grade" placeholder="请输入年级" />
                 </el-form-item>
-                <el-form-item label="班级" prop="clazz">
-                    <el-input v-model="form.clazz" placeholder="请输入班级" />
+                <el-form-item label="班级" prop="classes">
+                    <el-input v-model="form.classes" placeholder="请输入班级" />
                 </el-form-item>
-                <el-form-item label="性别" prop="sex">
-                    <el-select v-model="form.sex" placeholder="请选择性别" style="width: 100%">
+                <el-form-item label="性别" prop="gender">
+                    <el-select v-model="form.gender" placeholder="请选择性别" style="width: 100%">
                         <el-option label="男" value="男" />
                         <el-option label="女" value="女" />
                     </el-select>
                 </el-form-item>
                 <el-form-item label="电话号码" prop="tel">
                     <el-input v-model="form.tel" placeholder="请输入电话号码" />
+                </el-form-item>
+                <el-form-item label="邮箱" prop="email">
+                    <el-input v-model="form.email" placeholder="请输入邮箱地址" />
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -145,19 +149,33 @@ import axios from 'axios'
 const dialogVisible = ref(false)
 const formRef = ref(null)
 const searchQuery = ref('')
-const form = reactive({})
+const form = reactive({
+    id: '',           // 学号
+    username: '',     // 姓名
+    gender: '',       // 性别
+    institute: '',    // 学院
+    major: '',        // 专业
+    grade: '',        // 年级
+    classes: '',      // 班级
+    tel: '',         // 电话
+    email: ''        // 邮箱
+})
 
 // 表单验证规则
 const rules = {
-    studentName: [{ required: true, message: '请输入学生姓名', trigger: 'blur' }],
+    username: [{ required: true, message: '请输入学生姓名', trigger: 'blur' }],
     institute: [{ required: true, message: '请输入所属学院', trigger: 'blur' }],
     major: [{ required: true, message: '请输入所属专业', trigger: 'blur' }],
     grade: [{ required: true, message: '请输入年级', trigger: 'blur' }],
-    clazz: [{ required: true, message: '请输入班级', trigger: 'blur' }],
-    sex: [{ required: true, message: '请选择性别', trigger: 'change' }],
+    classes: [{ required: true, message: '请输入班级', trigger: 'blur' }],
+    gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
     tel: [
         { required: true, message: '请输入电话号码', trigger: 'blur' },
         { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+    ],
+    email: [
+        { required: true, message: '请输入邮箱', trigger: 'blur' },
+        { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
     ]
 }
 
@@ -181,14 +199,33 @@ const tableRowClassName = ({ rowIndex }) => {
 // 获取学生信息
 const getStudentInfo = async () => {
     try {
-        const res = await axios.get(
-            `/students/${pagination.current}/${pagination.size}`
-        )
+        console.log('获取学生列表，参数:', {
+            page: pagination.current,
+            size: pagination.size
+        })
+
+        const res = await axios.get('/user/students', {
+            params: {
+                page: pagination.current,
+                size: pagination.size
+            }
+        })
+
+        console.log('获取学生列表响应:', res.data)
+
         if (res.data.code === 200) {
             Object.assign(pagination, res.data.data)
+            console.log('更新后的分页数据:', pagination)
+        } else {
+            console.warn('获取学生列表失败:', res.data.msg)
+            ElMessage.warning(res.data.msg || '获取学生信息失败')
         }
     } catch (error) {
         console.error('获取学生信息失败:', error)
+        if (error.response) {
+            console.error('错误响应:', error.response.data)
+            console.error('状态码:', error.response.status)
+        }
         ElMessage.error('获取学生信息失败')
     }
 }
@@ -214,12 +251,40 @@ const handleSearch = () => {
 const checkGrade = async (studentId) => {
     dialogVisible.value = true
     try {
-        const res = await axios.get(`/student/${studentId}`)
+        console.log('获取学生详情，ID:', studentId)
+
+        // 修改为新的接口路径，使用 query 参数
+        const res = await axios.get('/user/student', {
+            params: { id: studentId }
+        })
+
+        console.log('获取学生详情响应:', res.data)
+
         if (res.data.code === 200) {
-            Object.assign(form, res.data.data)
+            const studentData = res.data.data
+            // 只复制需要的字段
+            Object.assign(form, {
+                id: studentData.id,
+                username: studentData.username,
+                gender: studentData.gender,
+                institute: studentData.institute,
+                major: studentData.major,
+                grade: studentData.grade,
+                classes: studentData.classes,
+                tel: studentData.tel,
+                email: studentData.email
+            })
+            console.log('更新表单数据:', form)
+        } else {
+            console.warn('获取学生详情失败:', res.data.msg)
+            ElMessage.warning(res.data.msg || '获取学生详情失败')
         }
     } catch (error) {
         console.error('获取学生详情失败:', error)
+        if (error.response) {
+            console.error('错误响应:', error.response.data)
+            console.error('状态码:', error.response.status)
+        }
         ElMessage.error('获取学生详情失败')
     }
 }
@@ -227,6 +292,8 @@ const checkGrade = async (studentId) => {
 // 删除学生
 const deleteById = async (studentId) => {
     try {
+        console.log('准备删除学生，ID:', studentId)
+
         await ElMessageBox.confirm(
             '确定删除该学生信息吗？删除后无法恢复',
             '警告',
@@ -237,14 +304,26 @@ const deleteById = async (studentId) => {
             }
         )
 
-        const res = await axios.delete(`/student/${studentId}`)
+        const res = await axios.delete(`/user/student`, {
+            params: { id: studentId }
+        })
+
+        console.log('删除学生响应:', res.data)
+
         if (res.data.code === 200) {
             ElMessage.success('删除成功')
-            await getStudentInfo()
+            await getStudentInfo() // 刷新列表
+        } else {
+            console.warn('删除失败:', res.data.msg)
+            ElMessage.warning(res.data.msg || '删除失败')
         }
     } catch (error) {
         if (error !== 'cancel') {
             console.error('删除学生失败:', error)
+            if (error.response) {
+                console.error('错误响应:', error.response.data)
+                console.error('状态码:', error.response.status)
+            }
             ElMessage.error('删除失败')
         }
     }
@@ -256,19 +335,33 @@ const submit = async () => {
 
     try {
         await formRef.value.validate()
+        console.log('提交学生信息更新:', form)
 
-        dialogVisible.value = false
-        const res = await axios.put('/student', form)
+        const res = await axios.put('/user/student', {
+            id: form.id,
+            username: form.username,
+            gender: form.gender,
+            institute: form.institute,
+            major: form.major,
+            grade: form.grade,
+            classes: form.classes,
+            tel: form.tel,
+            email: form.email
+        })
+
+        console.log('更新学生信息响应:', res.data)
 
         if (res.data.code === 200) {
+            dialogVisible.value = false
             ElMessage.success('更新成功')
             await getStudentInfo()
+        } else {
+            console.warn('更新失败:', res.data.msg)
+            ElMessage.warning(res.data.msg || '更新失败')
         }
     } catch (error) {
-        if (error !== false) {
-            console.error('更新学生信息失败:', error)
-            ElMessage.error('更新失败')
-        }
+        console.error('更新学生信息失败:', error)
+        ElMessage.error('更新失败')
     }
 }
 

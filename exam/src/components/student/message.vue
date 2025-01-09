@@ -40,17 +40,21 @@
                         :class="{ 'hover': flag && index === current }" @mouseenter="enter(index)"
                         @mouseleave="leave(index)">
                         <div class="message-header">
+                            <p class="message-author">{{ data.studentName }}</p>
                             <h3 class="message-title">
                                 <i class="iconfont icon-untitled33"></i>
                                 {{ data.title }}
                             </h3>
                             <span class="message-date">
                                 <i class="iconfont icon-date"></i>
-                                {{ data.time }}
+                                {{ formatDate(data.date) }}
                             </span>
                         </div>
 
                         <p class="message-content">{{ data.content }}</p>
+
+                        <el-button class="edit-btn" @click="edit(data)">编辑</el-button>
+                        <el-button class="delete-btn" @click="deleteMessage(data.id)">删除</el-button>
 
                         <div class="replies-section">
                             <div v-for="(replayData, index2) in data.replays" :key="index2" class="reply-item">
@@ -80,6 +84,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { ChatDotRound } from '@element-plus/icons-vue'
+import { useCookies } from 'vue3-cookies'
 
 // 响应式状态
 const flag = ref(false)
@@ -92,30 +97,48 @@ const pagination = ref({
     total: null,
     size: 4
 })
+const studentId = ref(null)
+const { cookies } = useCookies()
+
+// 获取学生id
+const getStudentId = async () => {
+    studentId.value = cookies.get('cid')
+    console.log("studentId", studentId.value);
+}
+
+// 获取学生姓名
+const getStudentName = async (id) => {
+    try {
+        const res = await axios.get('/user/student', {
+            params: {
+                id: id
+            }
+        });
+        if (res.data.code === 200) {
+            return res.data.data.username;
+        }
+    } catch (error) {
+        console.error('获取学生姓名失败:', error);
+        ElMessage.error('获取学生姓名失败');
+    }
+}
 
 // 获取留言列表
 const getMsg = async () => {
     try {
-        const res = await axios.get(`/messages/${pagination.value.current}/${pagination.value.size}`)
+        const res = await axios.get(`/messages/all?page=${pagination.value.current}&size=${pagination.value.size}`)
         if (res.data.code === 200) {
-            msg.value = res.data.data.records
+            const records = res.data.data.records;
+            for (const record of records) {
+                record.studentName = await getStudentName(record.user_id);
+            }
+            msg.value = records;
             pagination.value = res.data.data
         }
     } catch (error) {
         console.error('获取留言失败:', error)
         ElMessage.error('获取留言失败')
     }
-}
-
-// 分页相关方法
-const handleSizeChange = (val) => {
-    pagination.value.size = val
-    getMsg()
-}
-
-const handleCurrentChange = (val) => {
-    pagination.value.current = val
-    getMsg()
 }
 
 // 提交留言
@@ -126,11 +149,14 @@ const submit = async () => {
     }
 
     try {
-        const res = await axios.post('/message', {
+        const params = {
             title: title.value,
             content: content.value,
-            time: new Date()
-        })
+            date: new Date().toISOString(),
+            user_id: studentId.value
+        }
+        console.log("params", params);
+        const res = await axios.post('/message', params)
 
         if (res.data.code === 200) {
             ElMessage.success('留言成功')
@@ -144,34 +170,62 @@ const submit = async () => {
     }
 }
 
-// 回复留言
-const replay = async (messageId) => {
-    try {
-        const { value } = await ElMessageBox.prompt('回复留言', '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
-            inputErrorMessage: '回复不能为空'
-        })
+// 编辑留言
+const edit = async (message) => {
+    const { value } = await ElMessageBox.prompt('编辑留言', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: message.content,
+        inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
+        inputErrorMessage: '内容不能为空'
+    })
 
-        const res = await axios.post('/replay', {
-            replay: value,
-            replayTime: new Date(),
-            messageId: messageId
-        })
+    if (value) {
+        try {
+            const res = await axios.put('/message', {
+                id: message.id,
+                content: value,
+                date: new Date().toISOString()
+            })
 
-        if (res.data.code === 200) {
-            ElMessage.success('回复成功')
-            await getMsg()
-        }
-    } catch (error) {
-        if (error !== 'cancel') {
-            console.error('回复留言失败:', error)
-            ElMessage.error('回复失败')
-        } else {
-            ElMessage.info('取消输入')
+            if (res.data.code === 200) {
+                ElMessage.success('编辑成功')
+                await getMsg()
+            }
+        } catch (error) {
+            console.error('编辑留言失败:', error)
+            ElMessage.error('编辑留言失败')
         }
     }
+}
+
+// 删除留言
+const deleteMessage = async (id) => {
+    try {
+        await axios.delete(`/message?id=${id}`)
+        ElMessage.success('删除成功')
+        await getMsg()
+    } catch (error) {
+        console.error('删除留言失败:', error)
+        ElMessage.error('删除留言失败')
+    }
+}
+
+// 格式化日期
+const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
+    return new Date(dateString).toLocaleString('zh-CN', options);
+}
+
+// 分页相关方法
+const handleSizeChange = (val) => {
+    pagination.value.size = val
+    getMsg()
+}
+
+const handleCurrentChange = (val) => {
+    pagination.value.current = val
+    getMsg()
 }
 
 // 鼠标悬停相关方法
@@ -185,8 +239,9 @@ const leave = (index) => {
     current.value = index
 }
 
-// 组件挂载时获取留言列表
+// 组件挂载时获取学生ID和留言列表
 onMounted(() => {
+    getStudentId();
     getMsg()
 })
 </script>
@@ -356,8 +411,7 @@ onMounted(() => {
 
 .message-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     margin-bottom: 1rem;
 }
 
@@ -365,7 +419,7 @@ onMounted(() => {
     font-size: 1.1rem;
     color: #1d1d1f;
     margin: 0;
-    font-weight: 500;
+    font-weight: 600;
 
     i {
         margin-right: 0.5rem;
@@ -386,6 +440,12 @@ onMounted(() => {
     color: #1d1d1f;
     line-height: 1.6;
     margin: 1rem 0;
+}
+
+.message-author {
+    color: #007AFF;
+    font-weight: 500;
+    margin: 0.5rem 0;
 }
 
 .replies-section {

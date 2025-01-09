@@ -6,7 +6,6 @@
                 <MainLeft />
             </div>
             <div class="content-container">
-                <!-- <Navigator class="navigator" /> -->
                 <div class="page-content">
                     <router-view></router-view>
                 </div>
@@ -18,7 +17,6 @@
 <script setup>
 import Header from '@/components/common/header.vue'
 import MainLeft from '@/components/common/mainLeft.vue'
-import Navigator from '@/components/common/navigator.vue'
 import { ref, computed } from 'vue'
 import { useStore } from '@/stores/store'
 
@@ -71,12 +69,6 @@ const isCollapsed = computed(() => store.state.isCollapsed)
         min-width: 0;
         padding: 1.25rem;
 
-        .navigator {
-            background: #fff;
-            border-radius: 0.25rem;
-            box-shadow: 0 0.5rem 1rem 0 rgba(44, 51, 73, 0.1);
-            margin-bottom: 1.25rem;
-        }
 
         .page-content {
             background: #f5f7fa;

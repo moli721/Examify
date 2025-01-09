@@ -18,10 +18,10 @@
                 fontWeight: '600',
                 fontSize: '0.95rem'
             }">
-                <el-table-column prop="answerDate" label="考试日期" sortable width="300" column-key="answerDate"
-                    :filters="filter" :filter-method="filterHandler">
+                <el-table-column prop="date" label="考试开始时间" sortable width="300" column-key="date" :filters="filter"
+                    :filter-method="filterHandler">
                     <template #default="scope">
-                        <span class="date-text">{{ scope.row.answerDate }}</span>
+                        <span class="date-text">{{ new Date(scope.row.date).toLocaleString() }}</span>
                     </template>
                 </el-table-column>
 
@@ -33,9 +33,9 @@
                     </template>
                 </el-table-column>
 
-                <el-table-column prop="etScore" label="考试分数" width="200">
+                <el-table-column prop="score" label="考试分数" width="200">
                     <template #default="scope">
-                        <span class="score-text">{{ scope.row.etScore }}</span>
+                        <span class="score-text">{{ scope.row.score }}</span>
                     </template>
                 </el-table-column>
 
@@ -80,14 +80,22 @@ const getScore = () => {
     const studentId = cookies.get("cid");
     console.log(studentId)
     loading.value = true; // 数据加载则遮罩表格
-    axios(`/score/${pagination.value.current}/${pagination.value.size}/${studentId}`).then(res => {
+    const params = {
+        page: pagination.value.current,
+        size: pagination.value.size,
+        user_id: studentId
+    }
+    console.log("params", params);
+    axios.get('/scores/byUserId', {
+        params
+    }).then(res => {
         if (res.data.code === 200) {
             loading.value = false; // 数据加载完成去掉遮罩
             score.value = res.data.data.records;
             pagination.value = { ...res.data.data };
             const mapVal = score.value.map(element => ({
-                text: element.answerDate,
-                value: element.answerDate
+                text: element.date,
+                value: element.date
             }));
             const hash = [];
             const newArr = mapVal.reduce((item, next) => {

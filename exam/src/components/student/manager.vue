@@ -215,9 +215,9 @@ const submitForm = async () => {
         if (valid) {
             loading.value = true
             const studentId = cookies.get("cid")
-            const response = await axios.put('/studentPWD', {
-                pwd: ruleForm.pass,
-                studentId
+            const response = await axios.put('/user/student/pwd', {
+                newPassword: ruleForm.pass,
+                id: studentId
             })
 
             if (response.data != null) {

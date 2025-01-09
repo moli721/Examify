@@ -46,11 +46,16 @@ const handleTitle = (index) => {
 
 const addData = () => {
     const role = cookies.get("role")
-    if (role == 0) {
-        const hasTeacherMenu = store.menu.some(item => item.index === '5')
+    if (role == 0) {  // 管理员角色
+        // 检查是否已存在教师管理菜单
+        const hasTeacherMenu = store.menu.some(item => item.title === '教师管理')
         if (!hasTeacherMenu) {
+            // 找到最大的索引值
+            const maxIndex = Math.max(...store.menu.map(item => parseInt(item.index)))
+
+            // 添加教师管理菜单
             store.menu.push({
-                index: '5',
+                index: String(maxIndex + 1),  // 使用最大索引值+1
                 title: '教师管理',
                 icon: 'icon-Userselect',
                 content: [

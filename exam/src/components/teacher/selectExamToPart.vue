@@ -22,24 +22,24 @@
         <div class="table-container">
             <el-table :data="pagination.records" border :header-cell-style="headerStyle" highlight-current-row
                 :row-class-name="tableRowClassName">
-                <el-table-column fixed="left" prop="source" label="试卷名称" min-width="180">
+                <el-table-column fixed="left" prop="title" label="试卷名称" min-width="180">
                     <template #default="scope">
                         <div class="source-cell">
                             <el-icon>
                                 <Document />
                             </el-icon>
-                            <span>{{ scope.row.source }}</span>
+                            <span>{{ scope.row.title }}</span>
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column prop="description" label="试卷介绍" min-width="200" show-overflow-tooltip>
+                <el-table-column prop="tips" label="试卷介绍" min-width="200" show-overflow-tooltip>
                     <template #default="scope">
-                        <el-tooltip :content="scope.row.description" placement="top">
+                        <el-tooltip :content="scope.row.tips" placement="top">
                             <div class="description-cell">
                                 <el-icon>
                                     <InfoFilled />
                                 </el-icon>
-                                <span>{{ scope.row.description }}</span>
+                                <span>{{ scope.row.tips }}</span>
                             </div>
                         </el-tooltip>
                     </template>
@@ -59,23 +59,23 @@
                         <el-tag type="warning" size="small">{{ scope.row.grade }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="examDate" label="考试日期" width="120">
+                <el-table-column prop="startTime" label="考试日期" width="120">
                     <template #default="scope">
                         <div class="date-cell">
                             <el-icon>
                                 <Calendar />
                             </el-icon>
-                            <span>{{ scope.row.examDate }}</span>
+                            <span>{{ scope.row.startTime }}</span>
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column prop="totalTime" label="考试时长" width="120">
+                <el-table-column prop="duration" label="考试时长" width="120">
                     <template #default="scope">
                         <div class="time-cell">
                             <el-icon>
                                 <Timer />
                             </el-icon>
-                            <span>{{ scope.row.totalTime }}分钟</span>
+                            <span>{{ scope.row.duration }}分钟</span>
                         </div>
                     </template>
                 </el-table-column>
@@ -86,7 +86,7 @@
                 </el-table-column>
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
-                        <el-button @click="toPart(scope.row.examCode, scope.row.source)" type="primary" :icon="Select"
+                        <el-button @click="toPart(scope.row.id, scope.row.title)" type="primary" :icon="Select"
                             size="small">
                             选择
                         </el-button>
@@ -137,12 +137,16 @@ const tableRowClassName = ({ rowIndex }) => {
 
 const getExamInfo = async () => {
     try {
-        const res = await axios.get(
-            `/exams/${pagination.value.current}/${pagination.value.size}`
-        )
+        const res = await axios.get('/exams/noStatus', {
+            params: {
+                page: pagination.value.current,
+                size: pagination.value.size
+            }
+        })
         if (res.data.code === 200) {
             pagination.value = res.data.data
         }
+        console.log(res.data.data)
     } catch (error) {
         console.error('获取试卷信息失败:', error)
     }
@@ -162,12 +166,12 @@ const handleSearch = () => {
     getExamInfo()
 }
 
-const toPart = (examCode, source) => {
+const toPart = (id, title) => {
     router.push({
         path: '/index/scorePart',
         query: {
-            examCode,
-            source
+            id,
+            title
         }
     })
 }

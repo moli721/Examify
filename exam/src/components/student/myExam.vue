@@ -29,16 +29,51 @@
             </ul>
             <ul class="paper" v-loading="loading">
                 <template v-if="pagination.records && pagination.records.length > 0">
-                    <li class="item" v-for="(item, index) in pagination.records" :key="item.examCode">
-                        <h4 @click="toExamMsg(item.examCode)">{{ item.source }}</h4>
-                        <p class="name">{{ item.source }} - {{ item.description }}</p>
+                    <li class="item" v-for="item in pagination.records" :key="item.id">
+                        <div class="item-header">
+                            <h4 @click="toExamMsg(item.id)">
+                                <i class="el-icon-document icon-doc"></i>
+                                {{ item.title }}
+                            </h4>
+                            <span class="type-tag">
+                                <i class="el-icon-collection-tag icon-tag"></i>
+                                {{ item.type }}
+                            </span>
+                        </div>
+                        <p class="subject">
+                            <i class="el-icon-info icon-desc"></i>
+                            {{ item.subject }}
+                        </p>
                         <div class="info">
-                            <i class="el-icon-loading"></i>
-                            <span>{{ item.examDate }}</span>
-                            <i class="iconfont icon-icon-time"></i>
-                            <span v-if="item.totalTime != null">限时{{ item.totalTime }}分钟</span>
-                            <i class="iconfont icon-fenshu"></i>
-                            <span>满分{{ item.totalScore }}分</span>
+                            <div class="info-item">
+                                <i class="el-icon-time"></i>
+                                <span>考试时间：{{ formatDateTime(item.startTime) }} - {{ formatDateTime(item.endTime)
+                                    }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="iconfont icon-icon-time"></i>
+                                <span>考试时长：{{ item.duration }} 分钟</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="iconfont icon-fenshu"></i>
+                                <span>试卷总分：{{ item.totalScore }} 分</span>
+                            </div>
+                        </div>
+                        <div class="exam-info">
+                            <span class="institute">
+                                <i class="el-icon-school"></i>
+                                {{ item.institute }}
+                            </span>
+                            <span class="divider">·</span>
+                            <span class="major">
+                                <i class="el-icon-notebook-2"></i>
+                                {{ item.major }}
+                            </span>
+                            <span class="divider">·</span>
+                            <span class="grade">
+                                <i class="el-icon-date"></i>
+                                {{ item.grade }}级 第{{ item.term }}学期
+                            </span>
                         </div>
                     </li>
                 </template>
@@ -46,10 +81,11 @@
                     没有找到相关试卷
                 </li>
             </ul>
-            <div class="pagination">
-                <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
-                    :current-page="pagination.current" :page-sizes="[2, 6, 10, 20, 40]" :page-size="pagination.size"
-                    layout="total, sizes, prev, pager, next, jumper" :total="pagination.total" />
+            <div class="pagination-container">
+                <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
+                    :page-sizes="[2, 4, 6, 12, 18, 24]" :total="pagination.total"
+                    layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange" background />
             </div>
         </div>
     </div>
@@ -61,6 +97,12 @@ import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'
 import axios from 'axios';
 import { Document } from '@element-plus/icons-vue'
+
+// 格式化日期时间
+const formatDateTime = (dateStr) => {
+    const date = new Date(dateStr)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
 
 const key = ref(''); // 搜索关键字
 const loading = ref(false); // 加载状态
@@ -77,15 +119,23 @@ const router = useRouter();
 const getExamInfo = async () => {
     loading.value = true;
     try {
-        const response = await axios.get(`/exams/${pagination.value.current}/${pagination.value.size}`);
+        const response = await axios.get('/exams/noStatus', {
+            params: {
+                page: pagination.value.current,
+                size: pagination.value.size
+            },
+            withCredentials: true
+        });
+
         if (response.data.code === 200) {
+            console.log(response.data.data)
             pagination.value = {
                 ...pagination.value,
                 records: response.data.data.records || [],
                 total: response.data.data.total || 0
             };
         } else {
-            ElMessage.warning(response.data.message || '获取试卷列表失败');
+            ElMessage.warning(response.data.msg || '获取试卷列表失败');
         }
     } catch (error) {
         console.error('获取考试信息失败:', error);
@@ -111,7 +161,7 @@ const filterExams = (exams, searchKey) => {
     if (!searchKey) return exams;
     return exams.filter(exam =>
         exam.source.toLowerCase().includes(searchKey.toLowerCase()) ||
-        exam.description.toLowerCase().includes(searchKey.toLowerCase())
+        exam.subject.toLowerCase().includes(searchKey.toLowerCase())
     );
 };
 
@@ -119,32 +169,31 @@ const filterExams = (exams, searchKey) => {
 const search = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/exams', {
-            params: { key: key.value }
+        const response = await axios.get('/exams/noStatus', {
+            params: {
+                page: 1,
+                size: pagination.value.size,
+                key: key.value
+            },
+            withCredentials: true
         });
 
         if (response.data.code === 200) {
-            const allExams = response.data.data;
-            const filteredExams = filterExams(allExams, key.value);
-
             pagination.value = {
                 ...pagination.value,
-                records: filteredExams,
-                total: filteredExams.length
+                current: 1,
+                records: response.data.data.records || [],
+                total: response.data.data.total || 0
             };
 
-            if (filteredExams.length === 0) {
+            if (!response.data.data.records?.length) {
                 ElMessage.info('没有找到匹配的试卷');
             }
         } else {
-            pagination.value.records = [];
-            pagination.value.total = 0;
-            ElMessage.warning(response.data.message || '搜索无结果');
+            ElMessage.warning(response.data.msg || '搜索失败');
         }
     } catch (error) {
         console.error('搜索试卷失败:', error);
-        pagination.value.records = [];
-        pagination.value.total = 0;
         ElMessage.error('搜索失败，请稍后重试');
     } finally {
         loading.value = false;
@@ -152,8 +201,9 @@ const search = async () => {
 };
 
 // 跳转到试卷详情页
-const toExamMsg = (examCode) => {
-    router.push({ path: '/student/examMsg', query: { examCode } });
+const toExamMsg = (id) => {
+    console.log('跳转到考试详情，考试ID:', id)
+    router.push({ path: '/student/examMsg', query: { id: id } })
 };
 
 // 组件挂载时获取考试信息
@@ -333,7 +383,7 @@ onMounted(() => {
 
 .paper {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
     padding: 1rem 0;
 }
@@ -341,54 +391,161 @@ onMounted(() => {
 .item {
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     padding: 1.5rem;
     transition: all 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 
-.item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
 
-.item h4 {
-    cursor: pointer;
-    font-size: 18px;
-    color: #007aff;
-    margin-bottom: 10px;
-}
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
 
-.item .name {
-    font-size: 16px;
-    color: #555;
-    margin-bottom: 10px;
-}
+        h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: color 0.2s ease;
 
-.item .info {
-    font-size: 14px;
-    color: #888;
-}
+            .icon-doc {
+                color: var(--el-color-primary);
+                font-size: 1.2rem;
+            }
 
-.item .info i {
-    margin-right: 5px;
-    color: #007aff;
-}
+            &:hover {
+                color: var(--el-color-primary);
+            }
+        }
+    }
 
-.item .info span {
-    margin-right: 10px;
-}
+    .type-tag {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        background: var(--el-color-primary-light-9);
+        color: var(--el-color-primary);
 
-.pagination {
-    display: flex;
-    justify-content: center;
-    padding: 20px 0;
+        .icon-tag {
+            font-size: 0.9rem;
+        }
+    }
+
+    .subject {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        color: #4a5568;
+        margin-bottom: 1rem;
+
+        .icon-desc {
+            color: #64748b;
+            font-size: 1rem;
+        }
+    }
+
+    .info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+        padding: 1.2rem;
+        background: #f8fafc;
+        border-radius: 12px;
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: #64748b;
+            font-size: 0.95rem;
+
+            i {
+                color: var(--el-color-primary);
+                font-size: 1.1rem;
+            }
+        }
+    }
+
+    .exam-info {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+
+        .institute,
+        .major,
+        .grade {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: #475569;
+
+            i {
+                color: var(--el-color-primary);
+                font-size: 1rem;
+            }
+        }
+
+        .divider {
+            color: #cbd5e1;
+        }
+    }
 }
 
 .no-data {
+    grid-column: 1 / -1;
     text-align: center;
-    color: #999;
-    margin: 20px 0;
-    font-size: 16px;
+    padding: 2rem;
+    color: #94a3b8;
+    font-size: 1rem;
+}
+
+// 响应式调整
+@media (max-width: 768px) {
+    .paper {
+        grid-template-columns: 1fr;
+    }
+
+    .item {
+        padding: 1rem;
+    }
+
+    .item-header h4 {
+        font-size: 1.1rem;
+    }
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+    margin-top: 1rem;
+
+    :deep(.el-pagination) {
+        padding: 1rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
 }
 </style>

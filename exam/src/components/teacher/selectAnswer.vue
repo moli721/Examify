@@ -22,7 +22,7 @@
         <div class="table-container">
             <el-table :data="pagination.records" border :row-class-name="tableRowClassName"
                 :header-cell-style="headerStyle" highlight-current-row @row-click="handleRowClick">
-                <el-table-column fixed="left" prop="subject" label="试卷名称" width="180">
+                <el-table-column fixed="left" prop="subject" label="学科名称" width="200">
                     <template #default="scope">
                         <div class="subject-cell">
                             <el-icon>
@@ -32,19 +32,18 @@
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column prop="question" label="题目信息" width="490" show-overflow-tooltip />
-                <el-table-column prop="section" label="所属章节" width="200" />
-                <el-table-column prop="type" label="题目类型" width="200">
+                <el-table-column prop="title" label="题目信息" min-width="500" show-overflow-tooltip />
+                <el-table-column prop="type" label="题目类型" width="120">
                     <template #default="scope">
-                        <el-tag :type="getTypeTag(scope.row.type)">{{ scope.row.type }}</el-tag>
+                        <el-tag :type="getTypeTag(scope.row.type)">{{ getTypeText(scope.row.type) }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="score" label="试题分数" width="150">
+                <el-table-column prop="score" label="分数" width="100">
                     <template #default="scope">
                         <span class="score">{{ scope.row.score }}分</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="level" label="难度等级" width="133">
+                <el-table-column prop="level" label="难度" width="120">
                     <template #default="scope">
                         <el-rate v-model="scope.row.level" disabled text-color="#ff9900" show-score />
                     </template>
@@ -52,7 +51,7 @@
             </el-table>
 
             <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
-                :page-sizes="[6, 10, 20]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
+                :page-sizes="[10, 20, 30]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
                 @size-change="handleSizeChange" @current-change="handleCurrentChange" class="pagination" />
         </div>
     </div>
@@ -65,37 +64,48 @@ import axios from 'axios'
 
 const searchQuery = ref('')
 const pagination = ref({
-    current: 1,
-    total: null,
-    size: 6,
-    records: []
+    records: [],
+    total: 0,
+    size: 10,  // 默认每页显示10条
+    current: 1  // 当前页码
 })
 
+// 获取题目列表
 const getAnswerInfo = async () => {
     try {
-        const res = await axios.get(
-            `/answers/${pagination.value.current}/${pagination.value.size}`
-        )
+        const res = await axios.get('/questions', {
+            params: {
+                page: pagination.value.current,
+                size: pagination.value.size
+            }
+        })
         if (res.data.code === 200) {
-            pagination.value = res.data.data
+            console.log(res.data.data)
+            pagination.value.records = res.data.data.records
+            pagination.value.total = res.data.data.total
         }
     } catch (error) {
         console.error('获取题库信息失败:', error)
+        ElMessage.error('获取题库信息失败')
     }
 }
 
+// 处理每页显示数量变化
 const handleSizeChange = (val) => {
     pagination.value.size = val
+    pagination.value.current = 1  // 重置到第一页
     getAnswerInfo()
 }
 
+// 处理页码变化
 const handleCurrentChange = (val) => {
     pagination.value.current = val
     getAnswerInfo()
 }
 
+// 处理搜索
 const handleSearch = () => {
-    // 实现搜索功能
+    pagination.value.current = 1  // 搜索时重置到第一页
     getAnswerInfo()
 }
 
@@ -110,11 +120,22 @@ const headerStyle = {
     fontWeight: 'bold',
 }
 
+// 获取题目类型文本
+const getTypeText = (type) => {
+    const typeMap = {
+        0: '选择题',
+        1: '填空题',
+        2: '判断题'
+    }
+    return typeMap[type] || '未知类型'
+}
+
+// 获取题目类型对应的标签样式
 const getTypeTag = (type) => {
     const typeMap = {
-        '选择题': 'primary',
-        '判断题': 'success',
-        '填空题': 'warning'
+        0: 'primary',   // 选择题
+        1: 'warning',   // 填空题
+        2: 'success'    // 判断题
     }
     return typeMap[type] || 'info'
 }

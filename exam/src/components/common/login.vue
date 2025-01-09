@@ -1,5 +1,6 @@
 <template>
   <div id="login">
+    <AuthBackground />
     <!-- 添加更多粒子 -->
     <div class="particles">
       <div v-for="n in 40" :key="n" class="particle" :style="getParticleStyle(n)"></div>
@@ -46,6 +47,14 @@
               登录系统
             </el-button>
           </el-form>
+
+          <div class="register-link">
+            <p>还没有账号？
+              <el-button type="primary" link @click="router.push('/register')">
+                立即注册
+              </el-button>
+            </p>
+          </div>
         </div>
 
         <!-- 测试账号信息 -->
@@ -78,11 +87,12 @@
     <!-- 页脚版权信息 -->
     <el-row class="footer">
       <el-col>
-        <p class="copyright">
-          版权所有 ©2024 在线考试系统
+        <div class="copyright-section">
+          <p class="copyright">版权所有 ©2024 在线考试系统</p>
+          <p class="made-by">Made with <span class="heart">❤</span> by Moli721</p>
           <el-divider direction="vertical" />
-          <a href="http://beian.miit.gov.cn/" target="_blank">渝ICP备19001371号</a>
-        </p>
+          <span class="rights">All Rights Reserved</span>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -96,6 +106,7 @@ import { useCookies } from 'vue3-cookies';
 import { User, Lock } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
+import AuthBackground from './AuthBackground.vue'
 
 const router = useRouter();
 const { cookies } = useCookies();
@@ -104,55 +115,62 @@ const loading = ref(false);
 
 const labelPosition = 'top';
 const formLabelAlign = ref({
-  username: '20154084',
-  password: '123456'
+  username: '',
+  password: ''
 });
 
 const login = async () => {
-  loading.value = true;
+  console.log('点击登录按钮')
+  loading.value = true
   try {
     const res = await axios({
-      url: `/login`,
+      url: `/auth/login`,
       method: 'post',
       data: {
-        ...formLabelAlign.value
-      }
-    });
+        id: formLabelAlign.value.username,
+        password: formLabelAlign.value.password
+      },
+      withCredentials: true
+    })
 
-    let resData = res.data.data;
+    console.log('登录响应：', res.data)  // 添加日志看看返回了什么
+
+    let resData = res.data.data
     if (resData != null) {
       switch (resData.role) {
-        case "0":
-          cookies.set("cname", resData.adminName);
-          cookies.set("cid", resData.adminId);
-          cookies.set("role", 0);
-          router.push({ path: '/index' });
-          break;
-        case "1":
-          cookies.set("cname", resData.teacherName);
-          cookies.set("cid", resData.teacherId);
-          cookies.set("role", 1);
-          router.push({ path: '/index' });
-          break;
-        case "2":
-          cookies.set("cname", resData.studentName);
-          cookies.set("cid", resData.studentId);
-          router.push({ path: '/student' });
-          break;
+        case 0:
+          cookies.set("cname", resData.username)
+          cookies.set("cid", resData.id)
+          cookies.set("role", 0)
+          router.push({ path: '/index' })
+          break
+        case 1:
+          cookies.set("cname", resData.username)
+          cookies.set("cid", resData.id)
+          cookies.set("role", 1)
+          router.push({ path: '/index' })
+          break
+        case 2:
+          cookies.set("cname", resData.username)
+          cookies.set("cid", resData.id)
+          cookies.set("role", 2)
+          router.push({ path: '/student' })
+          break
       }
     } else {
       ElMessage({
         showClose: true,
         type: 'error',
         message: '用户名或者密码错误'
-      });
+      })
     }
   } catch (error) {
-    ElMessage.error('登录失败，请稍后重试');
+    console.error('登录错误：', error)
+    ElMessage.error('登录失败，请稍后重试')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // 添加粒子样式生成函数
 const getParticleStyle = (n) => {
@@ -376,24 +394,44 @@ const getParticleStyle = (n) => {
   position: relative;
   z-index: 2;
 
-  .copyright {
+  .copyright-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
     color: #666;
     font-size: 14px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 
-    a {
-      color: #666;
-      text-decoration: none;
-      transition: color 0.3s ease;
+    p {
+      margin: 0;
+    }
 
-      &:hover {
-        color: var(--el-color-primary);
-      }
+    .heart {
+      color: #BA6573;
+      animation: heartbeat 1.5s ease-in-out infinite;
+    }
+
+    .el-divider {
+      margin: 0;
+      height: 14px;
     }
   }
 }
 
-// 响应式设计
+@keyframes heartbeat {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+}
+
 @media (max-width: 768px) {
   .login-card {
     padding: 30px 20px;
@@ -423,6 +461,17 @@ const getParticleStyle = (n) => {
     .account-list {
       flex-direction: column;
       align-items: center;
+    }
+  }
+
+  .footer {
+    .copyright-section {
+      flex-direction: column;
+      gap: 4px;
+
+      .el-divider {
+        display: none;
+      }
     }
   }
 }
@@ -494,6 +543,16 @@ const getParticleStyle = (n) => {
   50% {
     opacity: 0.8;
     transform: translateY(-30px) scale(1.1);
+  }
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+
+  p {
+    margin: 0;
   }
 }
 </style>
