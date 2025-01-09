@@ -43,17 +43,22 @@
                         <span class="score">{{ scope.row.score }}分</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="level" label="难度" width="120">
+                <el-table-column prop="difficulty" label="难度" width="120">
                     <template #default="scope">
-                        <el-rate v-model="scope.row.level" disabled text-color="#ff9900" show-score />
+                        <el-rate v-model="scope.row.difficulty" disabled text-color="#ff9900" show-score />
                     </template>
                 </el-table-column>
             </el-table>
 
-            <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
-                :page-sizes="[10, 20, 30]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-                @size-change="handleSizeChange" @current-change="handleCurrentChange" class="pagination" />
+            <!-- 分页器 -->
+            <div class="pagination-container">
+                <el-pagination v-model:current-page="pagination.current" v-model:page-size="pagination.size"
+                    :page-sizes="[10, 20, 30]" :total="pagination.total"
+                    layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange" background />
+            </div>
         </div>
+
     </div>
 </template>
 
@@ -212,6 +217,20 @@ onMounted(() => {
         &:hover {
             box-shadow: 0 0 0 1px #409eff inset;
         }
+    }
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+    margin-top: 1rem;
+
+    :deep(.el-pagination) {
+        padding: 1rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
     }
 }
 </style>

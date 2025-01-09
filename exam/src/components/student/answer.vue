@@ -646,7 +646,8 @@ const commit = () => { //答案提交计算分数
             query: {
               score: finalScore,
               startTime: startTime.value,
-              endTime: endTime.value // 使用生成的结束时间
+              endTime: endTime.value, // 使用生成的结束时间
+              subject: examData.value.subject
             }
           });
         }

@@ -285,10 +285,19 @@ onMounted(() => {
     }
 
     .table-card {
+
         .pagination {
-            margin-top: 20px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
+            padding: 2rem 0;
+            margin-top: 1rem;
+
+            :deep(.el-pagination) {
+                padding: 1rem 2rem;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            }
         }
     }
 
