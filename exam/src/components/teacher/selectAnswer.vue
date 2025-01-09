@@ -21,7 +21,7 @@
 
         <div class="table-container">
             <el-table :data="pagination.records" border :row-class-name="tableRowClassName"
-                :header-cell-style="headerStyle" highlight-current-row @row-click="handleRowClick">
+                :header-cell-style="headerStyle" highlight-current-row @row-click="handleRowClick" style="width: 100%;">
                 <el-table-column fixed="left" prop="subject" label="学科名称" width="200">
                     <template #default="scope">
                         <div class="subject-cell">
@@ -32,7 +32,7 @@
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column prop="title" label="题目信息" min-width="500" show-overflow-tooltip />
+                <el-table-column prop="title" label="题目信息" min-width="300" show-overflow-tooltip />
                 <el-table-column prop="type" label="题目类型" width="120">
                     <template #default="scope">
                         <el-tag :type="getTypeTag(scope.row.type)">{{ getTypeText(scope.row.type) }}</el-tag>
@@ -43,7 +43,7 @@
                         <span class="score">{{ scope.row.score }}分</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="difficulty" label="难度" width="120">
+                <el-table-column prop="difficulty" label="难度" min-width="120">
                     <template #default="scope">
                         <el-rate v-model="scope.row.difficulty" disabled text-color="#ff9900" show-score />
                     </template>
@@ -185,7 +185,17 @@ onMounted(() => {
     }
 }
 
+.table-container {
+    width: 100%;
+    /* 确保容器宽度为100% */
+    overflow-x: auto;
+    /* 添加水平滚动条 */
+}
+
 :deep(.el-table) {
+    width: 100%;
+    overflow-x: auto;
+    /* 添加水平滚动条 */
     border-radius: 4px;
     overflow: hidden;
 

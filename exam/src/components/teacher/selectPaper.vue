@@ -155,7 +155,9 @@ const getPaperList = async () => {
                         if (paper.exam_id) {
                             const examInfo = await getExamInfo(paper.exam_id)
                             // 检查考试的 paper_Id 是否与当前试卷的 id 匹配
-                            if (examInfo && examInfo.paper_Id === paper.id.toString()) {
+                            // console.log('examInfo:', examInfo)
+                            // console.log('paper.id', paper.id)
+                            if (examInfo && examInfo.paper_Id === paper.id) {
                                 return {
                                     ...paper,
                                     examInfo: examInfo

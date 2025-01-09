@@ -621,8 +621,11 @@ const commit = () => { //答案提交计算分数
     }).then(() => {
       console.log("交卷");
       let date = new Date();
+      console.log('date', date)
       endTime.value = getTime(date); // 使用已有的 getTime 函数格式化时间
-      let answerDate = new Date(endTime.value).toISOString();
+      // 将格式化后的时间字符串解析为日期对象，并转换为 ISO 格式字符串
+      let answerDate = new Date(endTime.value.replace(" ", "T") + ".000Z").toISOString();
+
       // 提交成绩信息
       console.log("examData.value", examData.value);
       console.log("userInfo.value", userInfo.value);
@@ -641,6 +644,8 @@ const commit = () => { //答案提交计算分数
       axios.post('/score', answerData).then(res => {
         console.log(res);
         if (res.data.code == 200) {
+          console.log('startTime', startTime.value)
+          console.log('endTime', endTime.value)
           router.push({
             path: '/student/studentScore',
             query: {
