@@ -25,7 +25,7 @@
                         </el-badge>
                     </div>
                     <div class="tab" :class="{ active: currentTab === 'ongoing' }" @click="currentTab = 'ongoing'">
-                        <el-badge :value="getStatusCount('IN_PROGRESS')" class="badge warning">
+                        <el-badge :value="getStatusCount('ONGOING')" class="badge warning">
                             <span>进行中</span>
                         </el-badge>
                     </div>
@@ -167,7 +167,7 @@ const updateStatusCounts = (records) => {
 const getStatusText = (status) => {
     switch (status) {
         case 'NOT_STARTED': return '未开始'
-        case 'IN_PROGRESS': return '进行中'
+        case "ONGOING": return '进行中'
         case 'FINISHED': return '已结束'
         default: return '未知状态'
     }
@@ -177,7 +177,7 @@ const getStatusText = (status) => {
 const getStatusClass = (status) => {
     switch (status) {
         case 'NOT_STARTED': return 'status-pending'
-        case 'IN_PROGRESS': return 'status-ongoing'
+        case 'ONGOING': return 'status-ongoing'
         case 'FINISHED': return 'status-finished'
         default: return 'status-unknown'
     }
@@ -218,6 +218,7 @@ const getExamInfo = async () => {
 
         if (res.data.code === 200) {
             pagination.value = res.data.data
+            console.log(pagination.value)
         } else {
             ElMessage.warning(res.data.msg || '获取试卷列表失败')
         }

@@ -43,7 +43,7 @@
                         <span class="score">{{ scope.row.score }}分</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="difficulty" label="难度" min-width="120">
+                <el-table-column prop="difficulty" label="难度" min-width="140">
                     <template #default="scope">
                         <el-rate v-model="scope.row.difficulty" disabled text-color="#ff9900" show-score />
                     </template>

@@ -169,11 +169,11 @@ const filterExams = (exams, searchKey) => {
 const search = async () => {
     loading.value = true;
     try {
-        const response = await axios.get('/exams/noStatus', {
+        const response = await axios.get('/exams/bySubject', {
             params: {
                 page: 1,
                 size: pagination.value.size,
-                key: key.value
+                subject: key.value
             },
             withCredentials: true
         });

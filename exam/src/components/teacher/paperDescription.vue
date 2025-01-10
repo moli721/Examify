@@ -150,17 +150,17 @@
                 </template>
 
                 <div class="action-buttons">
-                    <el-button type="primary" @click="$router.push('/paper/create')">
+                    <el-button type="primary" @click="$router.push('/index/addpaper')">
                         <el-icon>
                             <Plus />
                         </el-icon>创建试卷
                     </el-button>
-                    <el-button type="success" @click="$router.push('/paper/list')">
+                    <el-button type="success" @click="$router.push('/index/selectpaper')">
                         <el-icon>
                             <List />
                         </el-icon>试卷列表
                     </el-button>
-                    <el-button type="info" @click="$router.push('/question/bank')">
+                    <el-button type="info" @click="$router.push('/index/selectanswer')">
                         <el-icon>
                             <Collection />
                         </el-icon>题库管理
