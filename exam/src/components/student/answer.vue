@@ -168,10 +168,14 @@
               <!-- 选择题 -->
               <div v-if="currentType == 1" class="choice-question">
                 <el-radio-group v-model="radio[index]" @change="getChangeLabel">
-                  <el-radio v-for="(option, idx) in ['A', 'B', 'C', 'D']" :key="idx" :label="idx + 1"
-                    class="answer-option">
-                    {{ showAnswer[`option${option}`] }}
-                  </el-radio>
+                  <div class="option-wrapper" v-for="(option, idx) in ['A', 'B', 'C', 'D']" :key="idx">
+                    <el-radio :label="idx + 1" class="answer-option">
+                      <div class="option-content">
+                        <span class="option-label">{{ option }}.</span>
+                        <span class="option-text">{{ showAnswer[`option${option}`] }}</span>
+                      </div>
+                    </el-radio>
+                  </div>
                 </el-radio-group>
               </div>
 
@@ -1475,5 +1479,65 @@ const isCurrentQuestionMarked = computed(() => {
 .slider-fade-leave-to {
   opacity: 0;
   transform: translateX(20px);
+}
+
+.choice-question {
+  margin: 20px 0;
+  width: 100%;
+
+  .option-wrapper {
+    margin-bottom: 16px;
+    width: 100%;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  :deep(.el-radio) {
+    height: 40px;
+    line-height: 40px;
+    width: 80%;
+    margin-right: 0;
+    display: flex;
+    align-items: center;
+
+    .el-radio__input {
+      margin-left: 20px; // 统一起始位置
+    }
+
+    .el-radio__label {
+      padding-left: 10px;
+    }
+  }
+
+  .option-content {
+    display: flex;
+    align-items: center;
+    min-width: 600px; // 设置最小宽度
+    max-width: 800px; // 设置最大宽度
+
+    .option-label {
+      flex-shrink: 0;
+      width: 30px;
+      text-align: left;
+      margin-right: 10px;
+    }
+
+    .option-text {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap; // 超出部分显示省略号
+    }
+  }
+}
+
+// 选中状态样式
+:deep(.el-radio.is-checked) {
+  .el-radio__label {
+    color: var(--el-color-primary);
+  }
 }
 </style>
