@@ -12,8 +12,7 @@
   - **Vue Router**: 用于管理应用的路由，支持单页面应用的导航。
   - **Pinia**: 状态管理库，用于管理应用的全局状态。
 
-- **后端**（计划中）:
-  - **Spring Boot**: 用于构建后端服务，提供 RESTful API 支持。
+- **后端** : 详细查看 https://github.com/kaorish/OnlineExam-Backend
 
 
 ## 自定义配置
