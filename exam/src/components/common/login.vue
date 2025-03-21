@@ -65,13 +65,28 @@
               <el-icon>
                 <User />
               </el-icon>
-              管理员账号：9527
+              管理员账号：8888888888
+              <el-button type="primary" link @click="directAdminLogin">
+                直接进入
+              </el-button>
             </el-tag>
             <el-tag size="large" effect="plain" type="success" round>
               <el-icon>
                 <User />
               </el-icon>
-              教师账号：20081001
+              教师账号：123456
+              <el-button type="success" link @click="directTeacherLogin">
+                直接进入
+              </el-button>
+            </el-tag>
+            <el-tag size="large" effect="plain" type="info" round>
+              <el-icon>
+                <User />
+              </el-icon>
+              学生账号：12345
+              <el-button type="info" link @click="directStudentLogin">
+                直接进入
+              </el-button>
             </el-tag>
             <el-tag size="large" effect="plain" type="warning" round>
               <el-icon>
@@ -119,9 +134,53 @@ const formLabelAlign = ref({
   password: ''
 });
 
+// 开发模式标志 - 设置为true跳过后端验证
+const devMode = ref(true);
+
 const login = async () => {
   console.log('点击登录按钮')
   loading.value = true
+  
+  // 开发模式：跳过后端验证直接登录
+  if (devMode.value) {
+    try {
+      // 模拟延迟以展示加载效果
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 根据用户名判断角色
+      let role = 0; // 默认为管理员
+      if (formLabelAlign.value.username === '123456') {
+        role = 1; // 教师
+      } else if (formLabelAlign.value.username === '12345') {
+        role = 2; // 学生
+      }
+      
+      // 设置cookies
+      cookies.set("cname", `开发模式用户-${formLabelAlign.value.username}`);
+      cookies.set("cid", formLabelAlign.value.username);
+      cookies.set("role", role);
+      
+      // 根据角色导航到不同页面
+      if (role === 2) {
+        router.push({ path: '/student' });
+      } else {
+        router.push({ path: '/index' });
+      }
+      
+      ElMessage({
+        type: 'success',
+        message: '开发模式：已跳过验证直接登录'
+      });
+    } catch (error) {
+      console.error('开发模式登录错误：', error);
+      ElMessage.error('登录失败，请检查开发模式设置');
+    } finally {
+      loading.value = false;
+    }
+    return;
+  }
+  
+  // 正常登录流程（连接后端）
   try {
     const res = await axios({
       url: `/auth/login`,
@@ -189,6 +248,79 @@ const getParticleStyle = (n) => {
     animationDuration: `${duration}s`,
     opacity: Math.random() * 0.5 + 0.3
   };
+};
+
+// 添加快速登录函数
+const quickLogin = async (username, password) => {
+  formLabelAlign.value.username = username;
+  formLabelAlign.value.password = password;
+  await login();
+};
+
+// 添加直接进入管理界面函数
+const directAdminLogin = () => {
+  loading.value = true;
+  
+  // 设置管理员cookies
+  cookies.set("cname", "开发模式管理员");
+  cookies.set("cid", "8888888888");
+  cookies.set("role", 0);
+  
+  // 显示提示
+  ElMessage({
+    type: 'success',
+    message: '开发模式：直接进入管理界面'
+  });
+  
+  // 延迟导航以显示加载效果
+  setTimeout(() => {
+    loading.value = false;
+    router.push({ path: '/index' });
+  }, 500);
+};
+
+// 添加直接进入教师界面函数
+const directTeacherLogin = () => {
+  loading.value = true;
+  
+  // 设置教师cookies
+  cookies.set("cname", "开发模式教师");
+  cookies.set("cid", "123456");
+  cookies.set("role", 1);
+  
+  // 显示提示
+  ElMessage({
+    type: 'success',
+    message: '开发模式：直接进入教师界面'
+  });
+  
+  // 延迟导航以显示加载效果
+  setTimeout(() => {
+    loading.value = false;
+    router.push({ path: '/index' });
+  }, 500);
+};
+
+// 添加直接进入学生界面函数
+const directStudentLogin = () => {
+  loading.value = true;
+  
+  // 设置学生cookies
+  cookies.set("cname", "开发模式学生");
+  cookies.set("cid", "12345");
+  cookies.set("role", 2);
+  
+  // 显示提示
+  ElMessage({
+    type: 'success',
+    message: '开发模式：直接进入学生界面'
+  });
+  
+  // 延迟导航以显示加载效果
+  setTimeout(() => {
+    loading.value = false;
+    router.push({ path: '/student' });
+  }, 500);
 };
 </script>
 

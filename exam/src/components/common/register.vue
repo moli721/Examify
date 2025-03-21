@@ -11,7 +11,7 @@
                     <!-- Logo部分 -->
                     <div class="logo-section">
                         <div class="logo-wrapper">
-                            <i class="iconfont icon-kaoshi"></i>
+                            <img src="@/assets/favicon.ico" alt="logo" class="logo">
                         </div>
                         <h1 class="system-title">在线考试系统</h1>
                     </div>
