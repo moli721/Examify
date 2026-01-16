@@ -151,30 +151,47 @@
                 </section>
             </el-tab-pane>
             <el-tab-pane name="second">
-                <span slot="label"><i class="iconfont icon-daoru-tianchong"></i>在线组卷</span>
-                <div class="box">
-                    <ul>
-                        <li>
-                            <span>试题难度:</span>
-                            <el-select v-model="difficultyValue" placeholder="试题难度" class="w150">
+                <template #label>
+                    <el-icon>
+                        <Document />
+                    </el-icon>
+                    <span>在线组卷</span>
+                </template>
+
+                <div class="paper-generator">
+                    <el-form :model="paperForm" label-width="120px">
+                        <el-form-item label="试题难度">
+                            <el-select v-model="difficultyValue" placeholder="请选择试题难度" class="w200">
                                 <el-option v-for="item in difficulty" :key="item.value" :label="item.label"
                                     :value="item.value">
                                 </el-option>
                             </el-select>
-                        </li>
-                        <li>
-                            <span>选择题数量：</span> <el-input type="text" v-model="changeNumber"></el-input>
-                        </li>
-                        <li>
-                            <span>填空题数量：</span> <el-input type="text" v-model="fillNumber"></el-input>
-                        </li>
-                        <li>
-                            <span>判断题数量：</span> <el-input type="text" v-model="judgeNumber"></el-input>
-                        </li>
-                        <li>
-                            <el-button type="primary" @click="create()">立即组卷</el-button>
-                        </li>
-                    </ul>
+                        </el-form-item>
+
+                        <el-form-item label="选择题数量">
+                            <el-input-number v-model="changeNumber" :min="0" :max="20" class="w200">
+                            </el-input-number>
+                        </el-form-item>
+
+                        <el-form-item label="填空题数量">
+                            <el-input-number v-model="fillNumber" :min="0" :max="20" class="w200">
+                            </el-input-number>
+                        </el-form-item>
+
+                        <el-form-item label="判断题数量">
+                            <el-input-number v-model="judgeNumber" :min="0" :max="20" class="w200">
+                            </el-input-number>
+                        </el-form-item>
+
+                        <el-form-item>
+                            <el-button type="primary" @click="create">
+                                <el-icon>
+                                    <DocumentAdd />
+                                </el-icon>
+                                立即组卷
+                            </el-button>
+                        </el-form-item>
+                    </el-form>
                 </div>
             </el-tab-pane>
         </el-tabs>
@@ -182,30 +199,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, reactive } from 'vue'
+import { Document, DocumentAdd } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-const route = useRoute()
 const router = useRouter()
 
-// 基础数据
-const activeName = ref('first')
-const changeNumber = ref(null)
-const fillNumber = ref(null)
-const judgeNumber = ref(null)
-const optionValue = ref('选择题')
+// 组卷相关数据
 const difficultyValue = ref('简单')
+const changeNumber = ref(0)
+const fillNumber = ref(0)
+const judgeNumber = ref(0)
 const paperId = ref(null)
-const subject = ref('')
-
-// 选项数据
-const options = [
-    { value: '选择题', label: '选择题' },
-    { value: '填空题', label: '填空题' },
-    { value: '判断题', label: '判断题' }
-]
 
 const difficulty = [
     { value: '简单', label: '简单' },
@@ -213,72 +220,47 @@ const difficulty = [
     { value: '困难', label: '困难' }
 ]
 
-const levels = [
-    { value: '1', label: '1' },
-    { value: '2', label: '2' },
-    { value: '3', label: '3' },
-    { value: '4', label: '4' },
-    { value: '5', label: '5' }
-]
+// 组卷方法
+const create = async () => {
+    try {
+        const res = await axios({
+            url: '/item',
+            method: 'post',
+            data: {
+                changeNumber: changeNumber.value,
+                fillNumber: fillNumber.value,
+                judgeNumber: judgeNumber.value,
+                paperId: paperId.value,
+                subject: '计算机网络' // 题目数量太少，指定为计算机网络出题
+            }
+        })
 
-const rights = [
-    { value: 'A', label: 'A' },
-    { value: 'B', label: 'B' },
-    { value: 'C', label: 'C' },
-    { value: 'D', label: 'D' }
-]
+        const { code, message } = res.data
 
-// 表单数据
-const postChange = reactive({
-    subject: '',
-    level: '',
-    rightAnswer: '',
-    section: '',
-    question: '',
-    analysis: '',
-    answerA: '',
-    answerB: '',
-    answerC: '',
-    answerD: ''
-})
+        if (code === 200) {
+            ElMessage({
+                message: message,
+                type: 'success'
+            })
 
-const postFill = reactive({
-    subject: '',
-    level: '',
-    answer: '',
-    section: '',
-    question: '',
-    analysis: ''
-})
-
-const postJudge = reactive({
-    subject: '',
-    level: '',
-    answer: '',
-    section: '',
-    question: '',
-    analysis: ''
-})
-
-const postPaper = reactive({
-    paperId: null,
-    questionType: null,
-    questionId: null
-})
-
-// 获取路由参数
-const getParams = () => {
-    const routeSubject = route.query.subject
-    const routePaperId = route.query.paperId
-    paperId.value = routePaperId
-    subject.value = routeSubject
-    postPaper.paperId = routePaperId
+            // 延迟跳转
+            setTimeout(() => {
+                router.push({ path: 'selectAnswer' })
+            }, 1000)
+        } else if (code === 400) {
+            ElMessage({
+                message: message,
+                type: 'error'
+            })
+        }
+    } catch (error) {
+        console.error('组卷失败:', error)
+        ElMessage({
+            message: '组卷失败，请稍后重试',
+            type: 'error'
+        })
+    }
 }
-
-// 组件挂载时获取参数
-onMounted(() => {
-    getParams()
-})
 </script>
 
 <style lang="less" scoped>
@@ -410,6 +392,48 @@ onMounted(() => {
             align-items: center;
             justify-content: center;
         }
+    }
+
+    .paper-generator {
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+
+        .w200 {
+            width: 200px;
+        }
+
+        .el-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .el-form-item {
+            margin-bottom: 20px;
+        }
+
+        .el-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+
+            .el-icon {
+                font-size: 16px;
+            }
+        }
+    }
+}
+
+// 标签页样式
+:deep(.el-tabs__item) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .el-icon {
+        margin-right: 4px;
     }
 }
 </style>

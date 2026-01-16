@@ -9,6 +9,11 @@ const router = createRouter({
       component: () => import('@/components/common/login.vue')
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/components/common/register.vue')
+    },
+    {
       path: '/index', // 教师主页
       component: () => import('@/components/admin/index.vue'),
       children: [
@@ -71,6 +76,26 @@ const router = createRouter({
           path: 'addAnswerChildren', // 点击试卷跳转到添加题库页面
           name: 'addAnswerChildren',
           component: () => import('@/components/teacher/addAnswerChildren.vue')
+        },
+        {
+          path: 'paperDescription', // 试卷管理功能介绍
+          name: 'paperDescription',
+          component: () => import('@/components/teacher/paperDescription.vue')
+        },
+        {
+          path: 'selectPaper', // 查询所有试卷
+          name: 'selectPaper',
+          component: () => import('@/components/teacher/selectPaper.vue')
+        },
+        {
+          path: 'paperDetail', // 试卷详情
+          name: 'paperDetail',
+          component: () => import('@/components/teacher/paperDetail.vue')
+        },
+        {
+          path: 'addPaper', // 增加试卷
+          name: 'addPaper',
+          component: () => import('@/components/teacher/addPaper.vue')
         },
         {
           path: 'studentManage', // 学生管理界面

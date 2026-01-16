@@ -5,7 +5,7 @@
             <div class="stat-card">
                 <i class="el-icon-document"></i>
                 <div class="stat-info">
-                    <div class="stat-title">试卷总数</div>
+                    <div class="stat-title">考试总数</div>
                     <div class="stat-value">{{ pagination.total || 0 }}</div>
                 </div>
             </div>
@@ -21,16 +21,16 @@
         <!-- 表格区域 -->
         <div class="table-container">
             <div class="table-header">
-                <h2>试卷列表</h2>
+                <h2>考试列表</h2>
                 <div class="table-actions">
-                    <el-input placeholder="搜索试卷..." prefix-icon="el-icon-search" style="width: 200px" />
-                    <el-button type="primary" icon="el-icon-plus">新增试卷</el-button>
+                    <el-input placeholder="搜索考试..." prefix-icon="el-icon-search" style="width: 200px" />
+                    <el-button type="primary" icon="el-icon-plus">新增考试</el-button>
                 </div>
             </div>
 
             <el-table :data="pagination.records" border style="width: 100%"
                 :header-cell-style="{ background: '#f5f7fa' }" @row-click="handleRowClick">
-                <el-table-column fixed="left" prop="source" label="试卷名称" min-width="180">
+                <el-table-column fixed="left" prop="source" label="考试名称" min-width="180">
                     <template #default="{ row }">
                         <div class="exam-name">
                             <el-tag size="small" :type="getExamTypeTag(row.type)">{{ row.type }}</el-tag>
@@ -82,17 +82,17 @@
         </div>
 
         <!-- 编辑对话框 -->
-        <el-dialog v-model="dialogVisible" title="编辑试卷信息" width="600px" :before-close="handleClose" destroy-on-close
+        <el-dialog v-model="dialogVisible" title="编辑考试信息" width="600px" :before-close="handleClose" destroy-on-close
             class="exam-edit-dialog">
             <el-form ref="formRef" :model="form" :rules="rules" label-width="90px" class="exam-form">
                 <el-row :gutter="20">
                     <el-col :span="12">
-                        <el-form-item label="试卷名称" prop="source" required>
-                            <el-input v-model="form.source" placeholder="请输入试卷名称" />
+                        <el-form-item label="考试名称" prop="source" required>
+                            <el-input v-model="form.source" placeholder="请输入考试名称" />
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
-                        <el-form-item label="试卷类型" prop="type" required>
+                        <el-form-item label="考试类型" prop="type" required>
                             <el-select v-model="form.type" placeholder="请选择类型" style="width: 100%">
                                 <el-option label="期中考试" value="期中考试" />
                                 <el-option label="期末考试" value="期末考试" />
@@ -103,7 +103,7 @@
                 </el-row>
 
                 <el-form-item label="介绍" prop="description">
-                    <el-input v-model="form.description" type="textarea" rows="2" placeholder="请输入试卷介绍" />
+                    <el-input v-model="form.description" type="textarea" rows="2" placeholder="请输入考试介绍" />
                 </el-form-item>
 
                 <el-row :gutter="20">
@@ -177,13 +177,13 @@ const pagination = ref({
 
 // 表单校验规则
 const rules = {
-    source: [{ required: true, message: '请输入试卷名称', trigger: 'blur' }],
-    type: [{ required: true, message: '请选择试卷类型', trigger: 'change' }],
+    source: [{ required: true, message: '请输入考试名称', trigger: 'blur' }],
+    type: [{ required: true, message: '请选择考试类型', trigger: 'change' }],
     totalScore: [{ required: true, message: '请输入总分', trigger: 'blur' }],
     examDate: [{ required: true, message: '请选择考试日期', trigger: 'change' }],
 }
 
-// 获取试卷类型对应的标签类型
+// 获取考试类型对应的标签类型
 const getExamTypeTag = (type) => {
     const typeMap = {
         '期中考试': 'warning',
@@ -195,7 +195,7 @@ const getExamTypeTag = (type) => {
 
 // 处理行点击
 const handleRowClick = (row) => {
-    console.log('查看试卷详情:', row)
+    console.log('查看考试详情:', row)
 }
 
 // 获取考试信息
@@ -210,7 +210,7 @@ const getExamInfo = async () => {
     }
 }
 
-// 编辑试卷
+// 编辑考试
 const edit = async (examCode) => {
     dialogVisible.value = true
     try {
@@ -219,7 +219,7 @@ const edit = async (examCode) => {
             form.value = res.data.data
         }
     } catch (error) {
-        console.error('获取试卷信息失败:', error)
+        console.error('获取考试信息失败:', error)
     }
 }
 
@@ -249,7 +249,7 @@ const submit = async () => {
             await getExamInfo()
         }
     } catch (error) {
-        console.error('更新试卷信息失败:', error)
+        console.error('更新考试信息失败:', error)
     }
 }
 
@@ -265,7 +265,7 @@ const deleteRecord = (examCode) => {
                 await axios.delete(`/exam/${examCode}`)
                 await getExamInfo()
             } catch (error) {
-                console.error('删除试卷失败:', error)
+                console.error('删除考试失败:', error)
             }
         })
         .catch(() => { })
