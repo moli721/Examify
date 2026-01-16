@@ -9,7 +9,8 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 一个基于 **Vue 3** + **Spring Boot** 的现代化在线考试管理系统
-n**后端仓库**: [OnlineExam-Backend](https://github.com/kaorish/OnlineExam-Backend)
+
+**后端仓库**: [OnlineExam-Backend](https://github.com/kaorish/OnlineExam-Backend)
 
 [功能特性](#功能特性) • [快速开始](#快速开始) • [项目结构](#项目结构) • [技术栈](#技术栈)
 
@@ -53,32 +54,32 @@ Examify 是一个功能完善的在线考试管理系统，支持多角色权限
 
 ### 安装依赖
 
-\`\`\`bash
+```bash
 cd exam
 npm install
-\`\`\`
+```
 
 ### 开发环境运行
 
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
 启动成功后，访问 http://localhost:5173
 
 ### 生产环境构建
 
-\`\`\`bash
+```bash
 npm run build
-\`\`\`
+```
 
-构建产物将生成在 \`dist\` 目录
+构建产物将生成在 `dist` 目录
 
 ### 预览生产构建
 
-\`\`\`bash
+```bash
 npm run preview
-\`\`\`
+```
 
 ---
 
@@ -94,7 +95,7 @@ npm run preview
 
 ## 📁 项目结构
 
-\`\`\`
+```
 examify/
 ├── exam/                      # 前端项目
 │   ├── src/
@@ -163,7 +164,7 @@ examify/
 │   └── jsconfig.json          # JS 配置
 │
 └── README.md                  # 项目文档
-\`\`\`
+```
 
 ---
 
@@ -199,13 +200,13 @@ examify/
 
 | 角色 | Role值 | 访问路径 | 权限范围 |
 |------|--------|----------|----------|
-| 管理员 | 0 | \`/index\` | 全部功能 + 教师管理 |
-| 教师 | 1 | \`/index\` | 考试/题库/试卷/学生管理 |
-| 学生 | 2 | \`/student\` | 参加考试、查看成绩 |
+| 管理员 | 0 | `/index` | 全部功能 + 教师管理 |
+| 教师 | 1 | `/index` | 考试/题库/试卷/学生管理 |
+| 学生 | 2 | `/student` | 参加考试、查看成绩 |
 
 ### 权限实现
 
-- **Cookie 存储**：用户登录后，将 \`role\`、\`cname\`、\`cid\` 存储在 Cookie 中
+- **Cookie 存储**：用户登录后，将 `role`、`cname`、`cid` 存储在 Cookie 中
 - **动态菜单**：根据角色动态渲染侧边栏菜单项
 - **路由分离**：管理端与学生端路由完全分离
 
@@ -251,7 +252,7 @@ examify/
 
 - **动态粒子**：40 个粒子随机运动，营造科技感
 - **渐变背景**：双层渐变动画，色彩丰富
-- **玻璃态效果**：\`backdrop-filter: blur(10px)\` 实现毛玻璃
+- **玻璃态效果**：`backdrop-filter: blur(10px)` 实现毛玻璃
 - **发光效果**：底部动态光晕
 
 ### 界面风格
@@ -267,7 +268,7 @@ examify/
 
 ### Pinia Store 结构
 
-\`\`\`javascript
+```javascript
 {
   isPractice: false,      // 练习模式标志
   flag: false,            // 菜单滑动标志
@@ -275,23 +276,23 @@ examify/
   isCollapsed: false,     // 菜单折叠状态
   menu: [...]             // 侧边栏菜单配置
 }
-\`\`\`
+```
 
 ### Actions
 
-- \`practice(status)\` - 设置练习模式
-- \`toggle()\` - 切换菜单状态
-- \`changeUserInfo(info)\` - 更新用户信息
-- \`getUserInfo(info)\` - 获取用户信息
+- `practice(status)` - 设置练习模式
+- `toggle()` - 切换菜单状态
+- `changeUserInfo(info)` - 更新用户信息
+- `getUserInfo(info)` - 获取用户信息
 
 ---
 
 ## 🌐 API 配置
 
-\`\`\`javascript
+```javascript
 // main.js
 axios.defaults.baseURL = 'http://localhost:8080';
-\`\`\`
+```
 
 **认证方式**：Cookie (cname, cid, role)
 
@@ -301,30 +302,30 @@ axios.defaults.baseURL = 'http://localhost:8080';
 
 ### 路径别名
 
-项目配置了 \`@\` 别名指向 \`src\` 目录：
+项目配置了 `@` 别名指向 `src` 目录：
 
-\`\`\`javascript
+```javascript
 // vite.config.js
 resolve: {
   alias: {
     '@': fileURLToPath(new URL('./src', import.meta.url))
   }
 }
-\`\`\`
+```
 
 使用示例：
 
-\`\`\`javascript
+```javascript
 import Header from '@/components/common/header.vue'
-\`\`\`
+```
 
 ### 日期工具函数
 
-\`src/utils/date.js\` 提供以下功能：
+`src/utils/date.js` 提供以下功能：
 
-- \`formatDate(date, format)\` - 格式化日期
-- \`getRelativeTime(date)\` - 相对时间显示
-- \`isSameDay(date1, date2)\` - 判断同一天
+- `formatDate(date, format)` - 格式化日期
+- `getRelativeTime(date)` - 相对时间显示
+- `isSameDay(date1, date2)` - 判断同一天
 
 ---
 
@@ -346,9 +347,9 @@ import Header from '@/components/common/header.vue'
 欢迎提交 Issue 或 Pull Request！
 
 1. Fork 本仓库
-2. 创建特性分支 (\`git checkout -b feature/AmazingFeature\`)
-3. 提交更改 (\`git commit -m 'Add some AmazingFeature'\`)
-4. 推送到分支 (\`git push origin feature/AmazingFeature\`)
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 提交 Pull Request
 
 ---
@@ -357,14 +358,14 @@ import Header from '@/components/common/header.vue'
 
 本项目遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
 
-- \`feat\`: 新功能
-- \`fix\`: 修复 Bug
-- \`docs\`: 文档更新
-- \`style\`: 代码格式调整
-- \`refactor\`: 代码重构
-- \`perf\`: 性能优化
-- \`test\`: 测试相关
-- \`chore\`: 构建/工具链相关
+- `feat`: 新功能
+- `fix`: 修复 Bug
+- `docs`: 文档更新
+- `style`: 代码格式调整
+- `refactor`: 代码重构
+- `perf`: 性能优化
+- `test`: 测试相关
+- `chore`: 构建/工具链相关
 
 ---
 
