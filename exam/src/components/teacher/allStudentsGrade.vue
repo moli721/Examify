@@ -47,16 +47,16 @@
                 </el-table-column>
                 <el-table-column prop="clazz" label="班级" width="120">
                     <template #default="scope">
-                        <el-tag type="info" size="small">{{ scope.row.clazz }}班</el-tag>
+                        <el-tag type="info" size="small">{{ scope.row.classes }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="sex" label="性别" width="100">
+                <el-table-column prop="gender" label="性别" width="100">
                     <template #default="scope">
-                        <el-icon :color="scope.row.sex === '男' ? '#409EFF' : '#F56C6C'">
-                            <Male v-if="scope.row.sex === '男'" />
+                        <el-icon :color="scope.row.gender === '男' ? '#409EFF' : '#F56C6C'">
+                            <Male v-if="scope.row.gender === '男'" />
                             <Female v-else />
                         </el-icon>
-                        {{ scope.row.sex }}
+                        {{ scope.row.gender }}
                     </template>
                 </el-table-column>
                 <el-table-column prop="tel" label="联系方式" width="150">
@@ -69,10 +69,14 @@
                         </div>
                     </template>
                 </el-table-column>
+                <el-table-column prop="score" label="成绩" width="150">
+                    <template #default="scope">
+                        <el-tag type="success" size="small">{{ scope.row.score }}</el-tag>
+                    </template>
+                </el-table-column>
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
-                        <el-button @click="checkGrade(scope.row.studentId)" type="primary" :icon="Document"
-                            size="small">
+                        <el-button @click="checkGrade(scope.row.id)" type="primary" :icon="Document" size="small">
                             查看成绩
                         </el-button>
                     </template>
@@ -119,43 +123,78 @@ const tableRowClassName = ({ rowIndex }) => {
     return rowIndex % 2 === 0 ? 'even-row' : 'odd-row'
 }
 
-const getStudentInfo = async () => {
+const getStudentGrade = async () => {
     try {
-        const res = await axios.get(
-            `/students/${pagination.value.current}/${pagination.value.size}`
-        )
+        const res = await axios.get('/scores/all', {
+            params: {
+                page: pagination.value.current,
+                size: pagination.value.size
+            }
+        })
+        console.log("res", res);
         if (res.data.code === 200) {
-            pagination.value = res.data.data
+            const records = res.data.data.records;
+            // 获取每个学生的姓名
+            for (const record of records) {
+                const studentInfo = await getStudentInfo(record.user_id);
+                record.studentName = studentInfo.username;
+                record.institute = studentInfo.institute;
+                record.major = studentInfo.major;
+                record.grade = studentInfo.grade;
+                record.classes = studentInfo.classes;
+                record.gender = studentInfo.gender;
+                record.tel = studentInfo.tel;
+
+            }
+            pagination.value.records = records;
+            pagination.value.total = res.data.data.total;
         }
     } catch (error) {
         console.error('获取学生信息失败:', error)
     }
 }
 
+// 获取学生姓名
+const getStudentInfo = async (id) => {
+    try {
+        const res = await axios.get('/user/student', {
+            params: {
+                id: id
+            }
+        });
+        if (res.data.code === 200) {
+            return res.data.data; // 返回学生姓名
+        }
+    } catch (error) {
+        console.error('获取学生姓名失败:', error);
+    }
+}
+
 const handleSizeChange = (val) => {
     pagination.value.size = val
-    getStudentInfo()
+    getStudentGrade()
 }
 
 const handleCurrentChange = (val) => {
     pagination.value.current = val
-    getStudentInfo()
+    getStudentGrade()
 }
 
 const handleSearch = () => {
     // 实现搜索功能
-    getStudentInfo()
+    getStudentGrade()
 }
 
-const checkGrade = (studentId) => {
+const checkGrade = (examId) => {
+    console.log(examId)
     router.push({
         path: '/index/grade',
-        query: { studentId }
+        query: { examId }
     })
 }
 
 onMounted(() => {
-    getStudentInfo()
+    getStudentGrade()
 })
 </script>
 

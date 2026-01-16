@@ -4,22 +4,22 @@
             <div class="form-header">
                 <div class="title">
                     <i class="el-icon-plus"></i>
-                    <span>创建新试卷</span>
+                    <span>创建新考试</span>
                 </div>
-                <p class="subtitle">请填写试卷基本信息</p>
+                <p class="subtitle">请填写考试基本信息</p>
             </div>
 
             <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="exam-form">
                 <!-- 基本信息 -->
                 <el-row :gutter="24">
                     <el-col :span="12">
-                        <el-form-item label="试卷名称" prop="source">
-                            <el-input v-model="form.source" placeholder="请输入试卷名称" />
+                        <el-form-item label="考试名称" prop="title" required>
+                            <el-input v-model="form.title" placeholder="例如：2024年上期期末考试" />
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
-                        <el-form-item label="试卷类型" prop="type">
-                            <el-select v-model="form.type" placeholder="请选择试卷类型" style="width: 100%">
+                        <el-form-item label="考试类型" prop="type" required>
+                            <el-select v-model="form.type" placeholder="请选择考试类型" style="width: 100%">
                                 <el-option label="期中考试" value="期中考试" />
                                 <el-option label="期末考试" value="期末考试" />
                                 <el-option label="模拟考试" value="模拟考试" />
@@ -28,55 +28,70 @@
                     </el-col>
                 </el-row>
 
-                <el-form-item label="试卷介绍" prop="description">
-                    <el-input v-model="form.description" type="textarea" rows="2" placeholder="请输入试卷介绍" />
+                <!-- 学院专业信息 -->
+                <el-row :gutter="24">
+                    <el-col :span="12">
+                        <el-form-item label="所属学院" prop="institute">
+                            <el-input v-model="form.institute" placeholder="例如：软件工程学院" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="所属专业" prop="major">
+                            <el-input v-model="form.major" placeholder="例如：计算机科学与技术" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <!-- 年级学期信息 -->
+                <el-row :gutter="24">
+                    <el-col :span="12">
+                        <el-form-item label="年级" prop="grade">
+                            <el-input v-model="form.grade" placeholder="例如：2024" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="学期" prop="term">
+                            <el-input v-model="form.term" placeholder="例如：1（上学期）或 2（下学期）" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <!-- 考试时间 -->
+                <el-row :gutter="24">
+                    <el-col :span="12">
+                        <el-form-item label="开始时间" prop="startTime" required>
+                            <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择考试开始时间"
+                                style="width: 100%" @change="calculateDuration" value-format="YYYY-MM-DDTHH:mm:ss" />
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="结束时间" prop="endTime" required>
+                            <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择考试结束时间"
+                                style="width: 100%" @change="calculateDuration" value-format="YYYY-MM-DDTHH:mm:ss" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <!-- 考试分数 -->
+                <el-row :gutter="24">
+                    <el-col :span="24">
+                        <el-form-item label="总分" prop="totalScore" required>
+                            <el-input-number v-model.number="form.totalScore" :min="0" :max="200"
+                                controls-position="right" style="width: 200px" placeholder="请输入考试总分" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <!-- 考试介绍 -->
+                <el-form-item label="考试介绍" prop="subject">
+                    <el-input v-model="form.subject" type="textarea" :rows="2"
+                        placeholder="请输入本次考试的简要介绍，例如：计算机网络期末考试" />
                 </el-form-item>
 
-                <!-- 院系信息 -->
-                <el-row :gutter="24">
-                    <el-col :span="8">
-                        <el-form-item label="所属学院" prop="institute">
-                            <el-input v-model="form.institute" placeholder="请输入所属学院" />
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-                        <el-form-item label="所属专业" prop="major">
-                            <el-input v-model="form.major" placeholder="请输入所属专业" />
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-                        <el-form-item label="年级" prop="grade">
-                            <el-input v-model="form.grade" placeholder="请输入年级" />
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-
-                <!-- 考试设置 -->
-                <el-row :gutter="24">
-                    <el-col :span="8">
-                        <el-form-item label="总分" prop="totalScore">
-                            <el-input-number v-model="form.totalScore" :min="0" :max="100" controls-position="right"
-                                placeholder="请输入总分" style="width: 100%" />
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-                        <el-form-item label="持续时间" prop="totalTime">
-                            <el-input-number v-model="form.totalTime" :min="0" :max="180" controls-position="right"
-                                placeholder="考试时长" style="width: 100%">
-                                <template #suffix>分钟</template>
-                            </el-input-number>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-                        <el-form-item label="考试日期" prop="examDate">
-                            <el-date-picker v-model="form.examDate" type="datetime" placeholder="选择日期和时间"
-                                style="width: 100%" />
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-
-                <el-form-item label="考生提示" prop="tips">
-                    <el-input type="textarea" v-model="form.tips" rows="4" placeholder="请输入考试注意事项" />
+                <!-- 考试提示 -->
+                <el-form-item label="考试提示" prop="tips">
+                    <el-input type="textarea" v-model="form.tips" :rows="3"
+                        placeholder="请输入考试注意事项，例如：请带好考试用具，不允许使用计算器等" />
                 </el-form-item>
 
                 <el-form-item class="form-buttons">
@@ -100,91 +115,86 @@ const loading = ref(false)
 
 // 表单验证规则
 const rules = {
-    source: [{ required: true, message: '请输入试卷名称', trigger: 'blur' }],
-    type: [{ required: true, message: '请选择试卷类型', trigger: 'change' }],
+    title: [{ required: true, message: '请输入考试名称', trigger: 'blur' }],
+    type: [{ required: true, message: '请选择考试类型', trigger: 'change' }],
     institute: [{ required: true, message: '请输入所属学院', trigger: 'blur' }],
     major: [{ required: true, message: '请输入所属专业', trigger: 'blur' }],
     grade: [{ required: true, message: '请输入年级', trigger: 'blur' }],
-    examDate: [{ required: true, message: '请选择考试日期', trigger: 'change' }],
-    totalTime: [{ required: true, message: '请输入考试时长', trigger: 'blur' }],
-    totalScore: [{ required: true, message: '请输入试卷总分', trigger: 'blur' }],
+    startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
+    endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
+    totalScore: [{ required: true, message: '请输入考试总分', trigger: 'blur' }],
 }
 
-// 表单数据初始化
+// 表单数据
 const form = ref({
-    source: null,
-    description: null,
-    institute: null,
-    major: null,
-    grade: null,
-    examDate: null,
-    totalTime: null,
-    totalScore: null,
-    type: null,
-    tips: null,
-    paperId: null
+    title: '',
+    subject: '',
+    institute: '',
+    major: '',
+    grade: '',
+    term: '',
+    startTime: '',
+    endTime: '',
+    duration: 0,
+    totalScore: 0,
+    type: '',
+    tips: ''
 })
 
-// 日期格式化
-const formatTime = (date) => {
-    const year = date.getFullYear()
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const day = date.getDate().toString().padStart(2, '0')
-    const hours = date.getHours().toString().padStart(2, '0')
-    const minutes = date.getMinutes().toString().padStart(2, '0')
-    const seconds = date.getSeconds().toString().padStart(2, '0')
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+// 计算考试时长
+const calculateDuration = () => {
+    if (form.value.startTime && form.value.endTime) {
+        const start = new Date(form.value.startTime)
+        const end = new Date(form.value.endTime)
+        const durationInMinutes = Math.floor((end - start) / (1000 * 60))
+        form.value.duration = durationInMinutes > 0 ? durationInMinutes : 0
+        console.log('计算的考试时长:', form.value.duration)
+    }
 }
 
 // 提交表单
 const onSubmit = async () => {
+    if (!formRef.value) return
+
     try {
-        const examDate = formatTime(form.value.examDate)
-        form.value.examDate = examDate.substr(0, 10)
+        await formRef.value.validate()
+        loading.value = true
 
-        // 获取 paperId
-        const paperIdRes = await axios.get('/examManagePaperId')
-        form.value.paperId = paperIdRes.data.data.paperId + 1
+        const submitData = {
+            ...form.value,
+            // 确保日期格式正确
+            startTime: form.value.startTime ? form.value.startTime : null,
+            endTime: form.value.endTime ? form.value.endTime : null,
+            duration: Number(form.value.duration),
+            totalScore: Number(form.value.totalScore)
+        }
 
-        // 提交考试信息
-        const res = await axios({
-            url: '/exam',
-            method: 'post',
-            data: { ...form.value }
-        })
+        console.log('准备提交的数据:', submitData)
+
+        const res = await axios.post('/exam', submitData)
 
         if (res.data.code === 200) {
-            ElMessage({
-                message: '数据添加成功',
-                type: 'success'
-            })
-            router.push({ path: '/index/selectExam' }) // 修改为完整路径
+            ElMessage.success('创建成功')
+            router.push('/index/selectExam')
+        } else {
+            ElMessage.warning(res.data.msg || '创建失败')
         }
     } catch (error) {
-        console.error('添加考试失败:', error)
-        ElMessage({
-            message: '添加失败，请重试',
-            type: 'error'
-        })
+        console.error('创建考试失败:', error)
+        if (error.response) {
+            console.error('错误响应数据:', error.response.data)
+            ElMessage.error(error.response.data.msg || '创建失败，服务器错误')
+        } else {
+            ElMessage.error('创建失败，请检查网络连接')
+        }
+    } finally {
+        loading.value = false
     }
 }
 
 // 取消按钮
 const cancel = () => {
-    form.value = {
-        source: null,
-        description: null,
-        institute: null,
-        major: null,
-        grade: null,
-        examDate: null,
-        totalTime: null,
-        totalScore: null,
-        type: null,
-        tips: null,
-        paperId: null
-    }
+    router.back()
 }
 </script>
 
@@ -233,47 +243,42 @@ const cancel = () => {
         }
 
         .exam-form {
-            :deep(.el-form-item) {
-                margin-bottom: 24px;
+            .el-row {
+                margin-bottom: 22px;
+            }
 
-                .el-form-item__label {
-                    font-weight: normal;
-                    color: #606266;
-                }
+            :deep(.el-form-item__label) {
+                font-weight: 500;
+                color: #606266;
+            }
 
-                .el-input__wrapper {
-                    &:hover {
-                        border-color: #409eff;
+            :deep(.el-form-item__content) {
+
+                .el-input,
+                .el-select {
+                    .el-input__inner {
+                        &::placeholder {
+                            color: #909399;
+                        }
                     }
                 }
             }
 
-            :deep(.el-input-number) {
-                width: 100%;
+            :deep(.el-textarea__inner) {
+                font-family: inherit;
+                padding: 8px 12px;
 
-                .el-input__wrapper {
-                    padding-right: 40px;
-                }
-
-                .el-input-number__decrease,
-                .el-input-number__increase {
-                    border-radius: 0;
-                    background: #f5f7fa;
-
-                    &:hover {
-                        color: #409eff;
-                    }
+                &::placeholder {
+                    color: #909399;
                 }
             }
 
             .form-buttons {
                 margin-top: 32px;
-                margin-bottom: 0;
                 text-align: center;
 
-                .el-button {
-                    padding: 12px 24px;
-                    min-width: 120px;
+                .el-button+.el-button {
+                    margin-left: 12px;
                 }
             }
         }

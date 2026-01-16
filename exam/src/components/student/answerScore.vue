@@ -1,9 +1,9 @@
 <template>
     <div class="score">
         <div class="title">
-            <p class="name">计算机网络</p>
+            <p class="name">{{ subject }}</p>
             <p class="description">(总分：100分,限时：100分钟)</p>
-            <p class="description">学生：大咸鱼</p>
+            <p class="description">学生：{{ studentname }}</p>
         </div>
         <div class="total">
             <div class="look">
@@ -34,6 +34,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useCookies } from 'vue3-cookies'
 
 import fail1 from '@/assets/img/cry1.gif';
 import fail2 from '@/assets/img/cry2.jpg';
@@ -49,6 +50,8 @@ const imgSrc = {
     pass1,
     pass2
 };
+const { cookies } = useCookies();
+const studentname = cookies.get('cname');
 const startTime = ref(null);
 const endTime = ref(null);
 
@@ -60,7 +63,7 @@ const transiton = () => {
         imgShow.value = true;
     }, 1000);
 };
-
+const subject = route.query.subject
 const getScore = () => {
     const scoreValue = route.query.score;
     const startTimeValue = route.query.startTime;

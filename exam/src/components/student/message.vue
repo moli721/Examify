@@ -40,22 +40,35 @@
                         :class="{ 'hover': flag && index === current }" @mouseenter="enter(index)"
                         @mouseleave="leave(index)">
                         <div class="message-header">
-                            <h3 class="message-title">
+                            <p class="message-author">{{ data.studentName }}</p>
+                            <h1 class="message-title">
                                 <i class="iconfont icon-untitled33"></i>
-                                {{ data.title }}
-                            </h3>
+                                留言标题：{{ data.title }}
+                            </h1>
                             <span class="message-date">
                                 <i class="iconfont icon-date"></i>
-                                {{ data.time }}
+                                {{ formatDate(data.date) }}
                             </span>
                         </div>
 
-                        <p class="message-content">{{ data.content }}</p>
+                        <p class="message-content">留言内容：{{ data.content }}</p>
+
+                        <el-button class="edit-btn" @click="edit(data)">编辑</el-button>
+                        <el-button class="delete-btn" @click="deleteMessage(data.id)">删除</el-button>
 
                         <div class="replies-section">
-                            <div v-for="(replayData, index2) in data.replays" :key="index2" class="reply-item">
-                                <i class="iconfont icon-huifuxiaoxi"></i>
-                                <span>{{ replayData.replay }}</span>
+                            <div v-for="(replyData, index2) in data.replays" :key="index2" class="reply-item">
+                                <div class="reply-content">
+                                    <i class="iconfont icon-huifuxiaoxi"></i>
+                                    <span>{{ replyData.content }}</span>
+                                </div>
+                                <div class="reply-info">
+                                    <span class="reply-date">{{ formatDate(replyData.date) }}</span>
+                                    <el-button v-if="replyData.user_id === studentId" class="delete-reply-btn"
+                                        @click="deleteReply(replyData.id)">
+                                        删除
+                                    </el-button>
+                                </div>
                             </div>
                         </div>
 
@@ -80,6 +93,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { ChatDotRound } from '@element-plus/icons-vue'
+import { useCookies } from 'vue3-cookies'
 
 // 响应式状态
 const flag = ref(false)
@@ -92,30 +106,72 @@ const pagination = ref({
     total: null,
     size: 4
 })
+const studentId = ref(null)
+const { cookies } = useCookies()
+
+// 获取学生id
+const getStudentId = async () => {
+    studentId.value = cookies.get('cid')
+    console.log("studentId", studentId.value);
+}
+
+// 获取学生姓名
+const getStudentName = async (id) => {
+    try {
+        const res = await axios.get('/user/student', {
+            params: {
+                id: id
+            }
+        });
+        if (res.data.code === 200) {
+            return res.data.data.username;
+        }
+    } catch (error) {
+        console.error('获取学生姓名失败:', error);
+        ElMessage.error('获取学生姓名失败');
+    }
+}
 
 // 获取留言列表
 const getMsg = async () => {
     try {
-        const res = await axios.get(`/messages/${pagination.value.current}/${pagination.value.size}`)
+        const res = await axios.get(`/messages/all?page=${pagination.value.current}&size=${pagination.value.size}`)
         if (res.data.code === 200) {
-            msg.value = res.data.data.records
-            pagination.value = res.data.data
+            const records = res.data.data.records;
+            // 创建一个新数组来存储处理后的记录
+            const processedRecords = [];
+
+            // 使用 Promise.all 并行处理所有记录
+            await Promise.all(records.map(async (record) => {
+                // 获取学生姓名
+                record.studentName = await getStudentName(record.user_id);
+                // 获取回复列表
+                const replyRes = await axios.get('/replies', {
+                    params: {
+                        message_id: record.id,
+                        page: 1,
+                        size: 10
+                    }
+                });
+
+                if (replyRes.data.code === 200) {
+                    record.replays = replyRes.data.data.records;
+                } else {
+                    record.replays = [];
+                }
+
+                processedRecords.push(record);
+            }));
+
+            // 更新消息列表
+            msg.value = processedRecords;
+            pagination.value = res.data.data;
+            console.log('处理后的消息列表：', msg.value);
         }
     } catch (error) {
         console.error('获取留言失败:', error)
         ElMessage.error('获取留言失败')
     }
-}
-
-// 分页相关方法
-const handleSizeChange = (val) => {
-    pagination.value.size = val
-    getMsg()
-}
-
-const handleCurrentChange = (val) => {
-    pagination.value.current = val
-    getMsg()
 }
 
 // 提交留言
@@ -126,11 +182,14 @@ const submit = async () => {
     }
 
     try {
-        const res = await axios.post('/message', {
+        const params = {
             title: title.value,
             content: content.value,
-            time: new Date()
-        })
+            date: new Date().toISOString(),
+            user_id: studentId.value
+        }
+        console.log("params", params);
+        const res = await axios.post('/message', params)
 
         if (res.data.code === 200) {
             ElMessage.success('留言成功')
@@ -144,34 +203,65 @@ const submit = async () => {
     }
 }
 
-// 回复留言
-const replay = async (messageId) => {
+// 编辑留言
+const edit = async (message) => {
+    const { value } = await ElMessageBox.prompt('编辑留言', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: message.content,
+        inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
+        inputErrorMessage: '内容不能为空'
+    })
+
+    if (value) {
+        try {
+            const res = await axios.put('/message', {
+                id: message.id,
+                content: value,
+                date: new Date().toISOString()
+            })
+
+            if (res.data.code === 200) {
+                ElMessage.success('编辑成功')
+                await getMsg()
+            }
+        } catch (error) {
+            console.error('编辑留言失败:', error)
+            ElMessage.error('编辑留言失败')
+        }
+    }
+}
+
+// 删除留言
+const deleteMessage = async (id) => {
     try {
-        const { value } = await ElMessageBox.prompt('回复留言', '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
-            inputErrorMessage: '回复不能为空'
-        })
-
-        const res = await axios.post('/replay', {
-            replay: value,
-            replayTime: new Date(),
-            messageId: messageId
-        })
-
+        const res = await axios.delete(`/message?id=${id}`)
         if (res.data.code === 200) {
-            ElMessage.success('回复成功')
+            ElMessage.success('删除成功')
+            // 重新加载消息列表
             await getMsg()
         }
     } catch (error) {
-        if (error !== 'cancel') {
-            console.error('回复留言失败:', error)
-            ElMessage.error('回复失败')
-        } else {
-            ElMessage.info('取消输入')
-        }
+        console.error('删除留言失败:', error)
+        ElMessage.error('删除留言失败')
     }
+}
+
+// 格式化日期
+const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
+    return new Date(dateString).toLocaleString('zh-CN', options);
+}
+
+// 分页相关方法
+const handleSizeChange = (val) => {
+    pagination.value.size = val
+    getMsg()
+}
+
+const handleCurrentChange = (val) => {
+    pagination.value.current = val
+    getMsg()
 }
 
 // 鼠标悬停相关方法
@@ -185,10 +275,65 @@ const leave = (index) => {
     current.value = index
 }
 
-// 组件挂载时获取留言列表
+// 组件挂载时获取学生ID和留言列表
 onMounted(() => {
-    getMsg()
+    getStudentId();
+    getMsg();  // 这会同时获取留言和回复
 })
+
+// 回复留言
+const replay = async (messageId) => {
+    try {
+        const { value } = await ElMessageBox.prompt('请输入回复内容', '回复', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
+            inputErrorMessage: '回复内容不能为空'
+        })
+
+        if (value) {
+            const params = {
+                content: value,
+                date: new Date().toISOString(),
+                user_id: studentId.value,
+                message_id: messageId
+            }
+
+            const res = await axios.post('/reply', params)
+            if (res.data.code === 200) {
+                ElMessage.success('回复成功')
+                // 重新加载消息列表
+                await getMsg()
+            }
+        }
+    } catch (error) {
+        console.error('回复失败:', error)
+        ElMessage.error('回复失败')
+    }
+}
+
+// 添加删除回复的方法
+const deleteReply = async (replyId) => {
+    try {
+        await ElMessageBox.confirm('确定要删除这条回复吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        })
+
+        const res = await axios.delete(`/reply?id=${replyId}`)
+        if (res.data.code === 200) {
+            ElMessage.success('删除回复成功')
+            // 重新加载消息列表
+            await getMsg()
+        }
+    } catch (error) {
+        if (error !== 'cancel') {
+            console.error('删除回复失败:', error)
+            ElMessage.error('删除回复失败')
+        }
+    }
+}
 </script>
 
 <style lang="less" scoped>
@@ -356,8 +501,7 @@ onMounted(() => {
 
 .message-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     margin-bottom: 1rem;
 }
 
@@ -365,7 +509,7 @@ onMounted(() => {
     font-size: 1.1rem;
     color: #1d1d1f;
     margin: 0;
-    font-weight: 500;
+    font-weight: 600;
 
     i {
         margin-right: 0.5rem;
@@ -388,6 +532,12 @@ onMounted(() => {
     margin: 1rem 0;
 }
 
+.message-author {
+    color: #007AFF;
+    font-weight: 500;
+    margin: 0.5rem 0;
+}
+
 .replies-section {
     margin-top: 1rem;
     padding-top: 1rem;
@@ -395,15 +545,48 @@ onMounted(() => {
 }
 
 .reply-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: rgba(255, 255, 255, 0.8);
     padding: 0.8rem 1rem;
     border-radius: 10px;
     margin-bottom: 0.5rem;
-    color: #007AFF;
-    font-size: 0.95rem;
 
-    i {
-        margin-right: 0.5rem;
+    .reply-content {
+        display: flex;
+        align-items: center;
+        color: #1d1d1f;
+        font-size: 0.95rem;
+
+        i {
+            margin-right: 0.5rem;
+            color: #007AFF;
+        }
+    }
+
+    .reply-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .reply-date {
+            color: #86868b;
+            font-size: 0.8rem;
+        }
+
+        .delete-reply-btn {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            color: #ff4d4f;
+            border: none;
+            background: transparent;
+
+            &:hover {
+                color: #ff7875;
+                background: rgba(255, 77, 79, 0.1);
+            }
+        }
     }
 }
 

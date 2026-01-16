@@ -12,12 +12,16 @@
             </h2>
 
             <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" class="add-form">
-                <el-form-item label="姓名" prop="studentName">
-                    <el-input v-model="form.studentName" placeholder="请输入学生姓名" />
+                <el-form-item label="学号" prop="id">
+                    <el-input v-model="form.id" placeholder="请输入学号" :prefix-icon="Collection" />
                 </el-form-item>
 
-                <el-form-item label="性别" prop="sex">
-                    <el-select v-model="form.sex" placeholder="请选择性别" style="width: 100%">
+                <el-form-item label="姓名" prop="username">
+                    <el-input v-model="form.username" placeholder="请输入学生姓名" />
+                </el-form-item>
+
+                <el-form-item label="性别" prop="gender">
+                    <el-select v-model="form.gender" placeholder="请选择性别" style="width: 100%">
                         <el-option label="男" value="男">
                             <template #default="{ label }">
                                 <el-icon :color="'#409EFF'">
@@ -49,8 +53,8 @@
                     <el-input v-model="form.grade" placeholder="请输入年级" />
                 </el-form-item>
 
-                <el-form-item label="班级" prop="clazz">
-                    <el-input v-model="form.clazz" placeholder="请输入班级" />
+                <el-form-item label="班级" prop="classes">
+                    <el-input v-model="form.classes" placeholder="请输入班级" />
                 </el-form-item>
 
                 <el-form-item label="手机号码" prop="tel">
@@ -65,8 +69,8 @@
                     <el-input v-model="form.email" placeholder="请输入邮箱地址" :prefix-icon="Message" />
                 </el-form-item>
 
-                <el-form-item label="密码" prop="pwd">
-                    <el-input v-model="form.pwd" type="password" placeholder="请输入密码" :prefix-icon="Lock"
+                <el-form-item label="密码" prop="password">
+                    <el-input v-model="form.password" type="password" placeholder="请输入密码" :prefix-icon="Lock"
                         show-password />
                 </el-form-item>
 
@@ -104,11 +108,15 @@ const formRef = ref(null)
 
 // 表单验证规则
 const rules = {
-    studentName: [
+    id: [
+        { required: true, message: '请输入学号', trigger: 'blur' },
+        { pattern: /^\d{5,20}$/, message: '学号必须是5-20位数字', trigger: 'blur' }
+    ],
+    username: [
         { required: true, message: '请输入学生姓名', trigger: 'blur' },
         { min: 2, max: 10, message: '长度在 2 到 10 个字符', trigger: 'blur' }
     ],
-    sex: [
+    gender: [
         { required: true, message: '请选择性别', trigger: 'change' }
     ],
     institute: [
@@ -120,22 +128,18 @@ const rules = {
     grade: [
         { required: true, message: '请输入年级', trigger: 'blur' }
     ],
-    clazz: [
+    classes: [
         { required: true, message: '请输入班级', trigger: 'blur' }
     ],
     tel: [
         { required: true, message: '请输入手机号码', trigger: 'blur' },
         { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
     ],
-    cardId: [
-        { required: true, message: '请输入身份证号', trigger: 'blur' },
-        { pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: '请输入正确的身份证号', trigger: 'blur' }
-    ],
     email: [
         { required: true, message: '请输入邮箱地址', trigger: 'blur' },
         { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
     ],
-    pwd: [
+    password: [
         { required: true, message: '请输入密码', trigger: 'blur' },
         { min: 6, max: 20, message: '长度在 6 到 20 个字符', trigger: 'blur' }
     ]
@@ -143,17 +147,17 @@ const rules = {
 
 // 表单数据
 const form = reactive({
-    studentName: '',
-    grade: '',
-    major: '',
-    clazz: '',
-    institute: '',
-    tel: '',
-    email: '',
-    pwd: '',
-    cardId: '',
-    sex: '',
-    role: 2
+    id: '',           // 学号
+    username: '',     // 姓名
+    gender: '',       // 性别
+    password: '',     // 密码
+    institute: '',    // 学院
+    major: '',        // 专业
+    grade: '',        // 年级
+    classes: '',      // 班级（注意是classes而不是clazz）
+    tel: '',         // 手机号码
+    email: '',       // 邮箱
+    role: 2          // 角色，学生固定为2
 })
 
 // 提交表单
@@ -162,33 +166,38 @@ const onSubmit = async () => {
 
     try {
         await formRef.value.validate()
+        console.log('提交学生信息:', form)
 
-        const res = await axios({
-            url: '/student',
-            method: 'post',
-            data: { ...form }
+        const res = await axios.post('/user/student', {
+            id: form.id,
+            username: form.username,
+            gender: form.gender,
+            password: form.password,
+            institute: form.institute,
+            major: form.major,
+            grade: form.grade,
+            classes: form.classes, // 注意这里是classes
+            tel: form.tel,
+            email: form.email,
+            role: form.role
         })
 
+        console.log('添加学生响应:', res.data)
+
         if (res.data.code === 200) {
-            ElMessage({
-                message: '添加学生成功',
-                type: 'success'
-            })
+            ElMessage.success('添加学生成功')
             router.push('/index/studentManage')
         } else {
-            ElMessage({
-                message: '添加失败',
-                type: 'error'
-            })
+            console.warn('添加失败:', res.data.msg)
+            ElMessage.error(res.data.msg || '添加失败')
         }
     } catch (error) {
-        if (error !== false) {
-            console.error('添加学生失败:', error)
-            ElMessage({
-                message: '添加失败，请检查表单信息',
-                type: 'error'
-            })
+        console.error('添加学生失败:', error)
+        if (error.response) {
+            console.error('错误响应:', error.response.data)
+            console.error('状态码:', error.response.status)
         }
+        ElMessage.error('添加失败，请检查表单信息')
     }
 }
 

@@ -1,12 +1,12 @@
 <template>
     <div class="msg-container">
         <div class="header">
-            <h2 class="title">试卷列表</h2>
-            <span class="source">来源: {{ examData.source }}</span>
+            <h2 class="title">{{ examData.paperTitle || '试卷列表' }}</h2>
+            <span class="source">来源: {{ examData.institute }}</span>
         </div>
         <div class="wrapper">
             <ul class="top">
-                <li class="example">{{ examData.source }}</li>
+                <li class="example">{{ examData.title }}</li>
                 <li class="icon-btn">
                     <el-icon>
                         <Edit />
@@ -22,7 +22,7 @@
                 <li class="right">
                     <div class="score-info">
                         <span class="count">总分</span>
-                        <span class="score">{{ score[0] + score[1] + score[2] }}</span>
+                        <span class="score">{{ examData.totalScore }}</span>
                     </div>
                 </li>
             </ul>
@@ -31,7 +31,7 @@
                     <el-icon>
                         <Calendar />
                     </el-icon>
-                    <span>更新于 {{ examData.examDate }}</span>
+                    <span>更新于 {{ examData.startTime }}</span>
                 </li>
                 <li class="info-item">
                     <el-icon>
@@ -46,7 +46,7 @@
                     <span>{{ examData.type }}</span>
                 </li>
                 <li class="right">
-                    <el-button type="primary" @click="toAnswer(examData.examCode)">开始答题</el-button>
+                    <el-button type="primary" @click="toAnswer(examData.id)">开始答题</el-button>
                 </li>
             </ul>
             <ul class="info">
@@ -58,63 +58,34 @@
                 </li>
             </ul>
         </div>
+
         <div class="content">
             <div class="exam-details">
                 <div class="exam-header">
                     <div class="exam-info">
-                        <span class="exam-name">{{ examData.source }}</span>
+                        <span class="exam-name">{{ examData.title }}</span>
                         <div class="exam-meta">
                             <el-icon>
                                 <Timer />
                             </el-icon>
-                            <span class="time">{{ examData.totalTime }}分钟</span>
+                            <span class="time">{{ examData.duration }}分钟</span>
                             <el-icon>
                                 <Medal />
                             </el-icon>
                             <span class="score">{{ examData.totalScore }}分</span>
                         </div>
                     </div>
-                    <el-button type="primary" size="small" class="detail-btn">
-                        <el-icon>
-                            <Document />
-                        </el-icon>
-                        查看详情
-                    </el-button>
                 </div>
-
-                <el-collapse v-model="activeName" class="topics-collapse">
-                    <el-collapse-item v-for="(topicItem, key) in topic" :key="key" :name="key.toString()">
-                        <template #title>
-                            <div class="topic-header">
-                                <span class="topic-type">
-                                    {{ getTopicType(key) }} <!-- 根据键获取题目类型 -->
-                                </span>
-                                <div class="topic-meta">
-                                    <span class="topic-count" v-if="topicCount[key - 1]">共 {{ topicCount[key - 1] }}
-                                        题</span> <!-- 显示题目数量 -->
-                                    <span class="topic-score" v-if="score[key - 1]">{{ score[key - 1] }} 分</span>
-                                    <!-- 显示题目总分 -->
-                                    <span v-else class="no-data">暂无数据</span> <!-- 如果没有数据，显示暂无数据 -->
-                                </div>
-                            </div>
-                        </template>
-
-                        <div class="questions-list">
-                            <div v-for="(list, idx) in topicItem" :key="idx" class="question-item">
-                                <span class="question-number">{{ idx + 1 }}.</span> <!-- 显示题目编号 -->
-                                <span class="question-content">{{ list.question }}</span> <!-- 显示题目内容 -->
-                                <span class="question-score">{{ list.score }}分</span> <!-- 显示题目分数 -->
-                            </div>
-                        </div>
-                    </el-collapse-item>
-                </el-collapse>
             </div>
         </div>
-        <el-dialog title="考生须知" :visible.sync="dialogVisible" width="30%">
+
+        <el-dialog title="考生须知" v-model="dialogVisible" width="30%">
             <span>{{ examData.tips }}</span>
-            <span slot="footer" class="dialog-footer">
-                <el-button @click="dialogVisible = false">知道了</el-button>
-            </span>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="dialogVisible = false">知道了</el-button>
+                </span>
+            </template>
         </el-dialog>
     </div>
 </template>
@@ -133,6 +104,7 @@ import {
     Calendar,
     School
 } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const dialogVisible = ref(false); // 对话框属性
 const activeName = ref('0'); // 默认打开序号
@@ -144,58 +116,100 @@ const topic = ref({}); // 试卷信息
 const route = useRoute();
 const router = useRouter();
 
-// 初始化页面数据
+// 获取试卷详细信息
+const getPaperDetail = async (paperId) => {
+    try {
+        console.log('开始获取试卷详情，试卷ID:', paperId)
+        const res = await axios.get('/paper', {
+            params: { id: paperId }
+        })
+        console.log('试卷详情响应:', res)
+
+        if (res.data.code === 200) {
+            return res.data.data
+        }
+        return null
+    } catch (error) {
+        console.error('获取试卷详情失败:', error)
+        ElMessage.error('获取试卷信息失败')
+        return null
+    }
+}
+
+// 获取试卷题目信息
+const getPaperQuestions = async (paperId) => {
+    try {
+        console.log('开始获取试卷题目，试卷ID:', paperId)
+        const res = await axios.get('/paperQuestions/byMapping', {
+            params: { paper_id: paperId }
+        })
+        console.log('试卷题目响应:', res)
+
+        if (res.data.code === 200) {
+            return res.data.data
+        }
+        return null
+    } catch (error) {
+        console.error('获取试卷题目失败:', error)
+        ElMessage.error('获取试卷题目失败')
+        return null
+    }
+}
+
+// 修改初始化方法
 const init = async () => {
     try {
-        const examCode = route.query.examCode;
-        const res = await axios.get(`/exam/${examCode}`);
-        console.log('试卷数据:', res.data); // 添加日志查看数据
+        // 1. 获取考试信息
+        const id = route.query.id
+        console.log('开始获取考试信息，考试ID:', id)
+        const examRes = await axios.get('/exam', {
+            params: { id }
+        })
+        console.log('考试信息响应:', examRes)
 
-        examData.value = { ...res.data.data };
-        const paperId = examData.value.paperId;
+        if (examRes.data.code === 200) {
+            examData.value = examRes.data.data
+            const paperId = examData.value.paper_Id
 
-        const topicRes = await axios.get(`/paper/${paperId}`);
-        console.log('题目数据:', topicRes.data); // 添加日志查看数据
+            // 2. 获取试卷详细信息
+            const paperDetail = await getPaperDetail(paperId)
+            if (paperDetail) {
+                examData.value.paperTitle = paperDetail.title
 
-        topic.value = { ...topicRes.data };
+                // 3. 获取试卷题目信息
+                const questions = await getPaperQuestions(paperId)
+                if (questions) {
+                    topic.value = questions  // 直接使用返回的题目数据
 
-        // 确保数据存在后再处理
-        if (topic.value) {
-            const keys = Object.keys(topic.value);
-            keys.forEach(e => {
-                const data = topic.value[e];
-                if (Array.isArray(data)) {
-                    topicCount.value.push(data.length);
-                    const currentScore = data.reduce((sum, item) => sum + (item.score || 0), 0);
-                    score.value.push(currentScore);
+                    // 计算每种类型的题目数量和分数
+                    Object.keys(questions).forEach(type => {
+                        const typeQuestions = questions[type]
+                        if (Array.isArray(typeQuestions)) {
+                            topicCount.value.push(typeQuestions.length)
+                            const typeScore = typeQuestions.reduce((sum, q) => sum + (q.score || 0), 0)
+                            score.value.push(typeScore)
+                        }
+                    })
+
+                    console.log('处理后的题目数据:', {
+                        topics: topic.value,
+                        counts: topicCount.value,
+                        scores: score.value
+                    })
                 }
-            });
+            }
+        } else {
+            throw new Error(examRes.data.msg || '获取考试信息失败')
         }
-
-        // console.log('题目类型数据:', topic.value);
-        // console.log('题目数量:', topicCount.value);
-        // console.log('题目分数:', score.value);
     } catch (error) {
-        console.error('数据获取错误:', error);
+        console.error('初始化数据失败:', error)
+        ElMessage.error(error.message || '获取考试信息失败')
     }
-};
+}
 
-// 跳转到答题页面
+// 修改跳转方法
 const toAnswer = (id) => {
-    router.push({ path: "/student/answer", query: { examCode: id } });
-};
-
-const getTopicType = (index) => {
-    switch (index) {
-        case '1':
-            return '选择题';
-        case '2':
-            return '填空题';
-        case '3':
-            return '判断题';
-        default:
-            return '其他';
-    }
+    router.push({ path: "/student/answer", query: { id: id } });  // 使用 id 作为参数名
 };
 
 // 组件挂载时初始化数据

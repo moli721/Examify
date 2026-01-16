@@ -9,6 +9,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 一个基于 **Vue 3** + **Spring Boot** 的现代化在线考试管理系统
+n**后端仓库**: [OnlineExam-Backend](https://github.com/kaorish/OnlineExam-Backend)
 
 [功能特性](#功能特性) • [快速开始](#快速开始) • [项目结构](#项目结构) • [技术栈](#技术栈)
 

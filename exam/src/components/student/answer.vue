@@ -168,10 +168,14 @@
               <!-- 选择题 -->
               <div v-if="currentType == 1" class="choice-question">
                 <el-radio-group v-model="radio[index]" @change="getChangeLabel">
-                  <el-radio v-for="(option, idx) in ['A', 'B', 'C', 'D']" :key="idx" :label="idx + 1"
-                    class="answer-option">
-                    {{ showAnswer[`answer${option}`] }}
-                  </el-radio>
+                  <div class="option-wrapper" v-for="(option, idx) in ['A', 'B', 'C', 'D']" :key="idx">
+                    <el-radio :label="idx + 1" class="answer-option">
+                      <div class="option-content">
+                        <span class="option-label">{{ option }}.</span>
+                        <span class="option-text">{{ showAnswer[`option${option}`] }}</span>
+                      </div>
+                    </el-radio>
+                  </div>
                 </el-radio-group>
               </div>
 
@@ -333,25 +337,32 @@ const getExamData = async () => {
 
   try {
     // 获取考试详情
-    const examResponse = await axios(`/exam/${examCode}`);
+    const id = route.query.id;
+    const examResponse = await axios('/exam', { params: { id } });
     examData.value = examResponse.data.data;
+    console.log(examData.value);
     index.value = 0;
-    time.value = examData.value.totalScore; // 获取分钟数
-    let paperId = examData.value.paperId;
-
+    time.value = examData.value.duration; // 获取分钟数
+    let paperId = examData.value.paper_Id;
+    console.log(paperId);
     // 通过 paperId 获取试题题目信息
-    const paperResponse = await axios(`/paper/${paperId}`);
+    const paperResponse = await axios.get('/paperQuestions/byMapping', {
+      params: { paper_id: paperId }
+    })
     topic.value = paperResponse.data;
+    console.log("topic.value", topic.value);
     let reduceAnswerData = topic.value[1][index.value];
     reduceAnswer.value = reduceAnswerData;
-
+    console.log("reduceAnswer.value", reduceAnswer.value);
     // 处理题目数量和分数统计
     let keys = Object.keys(topic.value); // 对象转数组
+    console.log("keys", keys);
     topicCount.value = [];
     score.value = [];
 
     keys.forEach(e => {
       let data = topic.value[e];
+      console.log("data", data);
       topicCount.value.push(data.length);
       let currentScore = 0;
 
@@ -368,16 +379,18 @@ const getExamData = async () => {
     // 根据填空题数量创建二维空数组存放每道题答案
     for (let i = 0; i < len; i++) {
       let children = [null, null, null, null];
+      console.log("children", children);
       father.push(children);
     }
     fillAnswer.value = father;
-
+    console.log("fillAnswer.value", fillAnswer.value);
     // 设置初始题目显示
     let dataInit = topic.value[1];
     number.value = 1;
-    showQuestion.value = dataInit[0].question;
+    showQuestion.value = dataInit[0].title;
+    console.log("showQuestion.value", showQuestion.value);
     showAnswer.value = dataInit[0];
-
+    console.log("showAnswer.value", showAnswer.value);
     // 初始化答题数组
     radio.value = new Array(topicCount.value[0]).fill(null); // 选择题答案数组
     judgeAnswer.value = new Array(topicCount.value[2]).fill(null); // 判断题答案数组
@@ -406,7 +419,10 @@ const change = (newIndex) => { // 这里的参数应该是新的索引
     }
     title.value = "请选择正确的选项";
     let Data = topic.value[1];
-    showQuestion.value = Data[index.value].question; // 获取题目信息
+
+    console.log("DataValue", Data[index.value]);
+
+    showQuestion.value = Data[index.value].title; // 获取题目信息
     showAnswer.value = Data[index.value];
     number.value = index.value + 1;
   } else if (index.value >= len) {
@@ -440,7 +456,7 @@ const fill = (idx) => { //填空题
       title.value = "请在横线处填写答案";
       let Data = topic.value[2];
       console.log('填空题数据:', Data[idx]);
-      showQuestion.value = Data[idx].question; //获取题目信息
+      showQuestion.value = Data[idx].title; //获取题目信息
 
       // 修复 part 的赋值
       let partCount = showQuestion.value.split("()").length - 1; //根据题目中括号的数量确定填空横线数量
@@ -475,7 +491,7 @@ const judge = (idx) => { //判断题
       title.value = "请作出正确判断";
       let Data = topic.value[3];
       console.log('Question data:', Data);
-      showQuestion.value = Data[index.value].question; //获取题目信息
+      showQuestion.value = Data[index.value].title; //获取题目信息
       number.value = topicCount.value[0] + topicCount.value[1] + index.value + 1;
     }
   } else if (idx >= len) {
@@ -609,28 +625,38 @@ const commit = () => { //答案提交计算分数
     }).then(() => {
       console.log("交卷");
       let date = new Date();
-      endTime.value = getTime(date);
-      let answerDate = endTime.value.substr(0, 10);
+      console.log('date', date)
+      endTime.value = getTime(date); // 使用已有的 getTime 函数格式化时间
+      // 将格式化后的时间字符串解析为日期对象，并转换为 ISO 格式字符串
+      let answerDate = new Date(endTime.value.replace(" ", "T") + ".000Z").toISOString();
 
       // 提交成绩信息
-      axios({
-        url: '/score',
-        method: 'post',
-        data: {
-          examCode: examData.value.examCode,
-          studentId: userInfo.value.id,
-          subject: examData.value.source,
-          etScore: finalScore,
-          answerDate: answerDate,
-        }
-      }).then(res => {
+      console.log("examData.value", examData.value);
+      console.log("userInfo.value", userInfo.value);
+      console.log("finalScore", finalScore);
+      console.log("answerDate", answerDate);
+
+      let answerData = {
+        id: examData.value.id,
+        subject: examData.value.subject,
+        score: finalScore,
+        user_id: userInfo.value.id,
+        exam_id: examData.value.id,
+        date: answerDate
+      }
+      console.log("answerData", answerData);
+      axios.post('/score', answerData).then(res => {
+        console.log(res);
         if (res.data.code == 200) {
+          console.log('startTime', startTime.value)
+          console.log('endTime', endTime.value)
           router.push({
             path: '/student/studentScore',
             query: {
               score: finalScore,
               startTime: startTime.value,
-              endTime: endTime.value
+              endTime: endTime.value, // 使用生成的结束时间
+              subject: examData.value.subject
             }
           });
         }
@@ -1453,5 +1479,65 @@ const isCurrentQuestionMarked = computed(() => {
 .slider-fade-leave-to {
   opacity: 0;
   transform: translateX(20px);
+}
+
+.choice-question {
+  margin: 20px 0;
+  width: 100%;
+
+  .option-wrapper {
+    margin-bottom: 16px;
+    width: 100%;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  :deep(.el-radio) {
+    height: 40px;
+    line-height: 40px;
+    width: 80%;
+    margin-right: 0;
+    display: flex;
+    align-items: center;
+
+    .el-radio__input {
+      margin-left: 20px; // 统一起始位置
+    }
+
+    .el-radio__label {
+      padding-left: 10px;
+    }
+  }
+
+  .option-content {
+    display: flex;
+    align-items: center;
+    min-width: 600px; // 设置最小宽度
+    max-width: 800px; // 设置最大宽度
+
+    .option-label {
+      flex-shrink: 0;
+      width: 30px;
+      text-align: left;
+      margin-right: 10px;
+    }
+
+    .option-text {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap; // 超出部分显示省略号
+    }
+  }
+}
+
+// 选中状态样式
+:deep(.el-radio.is-checked) {
+  .el-radio__label {
+    color: var(--el-color-primary);
+  }
 }
 </style>

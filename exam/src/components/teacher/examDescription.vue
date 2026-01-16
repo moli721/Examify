@@ -37,7 +37,7 @@
                             <i class="el-icon-info"></i>
                             考试发布流程
                         </div>
-                        <p>老师发布考试后，学生可以在主页面看到相应的考试信息。考试安排表是添加题目的前提，对应数据表exammanage。</p>
+                        <p>老师发布考试后，学生可以在主页面看到相应的考试信息。考试安排表是添加题目的前提。</p>
                     </div>
                     <div class="info-item">
                         <div class="info-title">
